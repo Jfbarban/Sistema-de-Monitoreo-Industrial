@@ -1,15 +1,13 @@
 ﻿using System;
 using System.Windows;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using Sistema_de_Monitoreo_Industrial.Services;
 using Sistema_de_Monitoreo_Industrial.ViewModels;
 using Sistema_de_Monitoreo_Industrial.Views;
 
 namespace Sistema_de_Monitoreo_Industrial.Views
 {
-    /// <summary>
-    /// Lógica de interacción para MainWindow.xaml
-    /// </summary>
     public partial class MainWindow : Window
     {
         private readonly MainViewModel _viewModel;
@@ -18,24 +16,19 @@ namespace Sistema_de_Monitoreo_Industrial.Views
         {
             InitializeComponent();
 
+            // 1. Estado inicial del botón y ViewModel
             btnConectar.IsChecked = false;
-
-            // Inicializamos el ViewModel principal
             _viewModel = new MainViewModel();
-
-            // Establecemos el DataContext para que los Bindings del XAML funcionen
             this.DataContext = _viewModel;
 
-            // Carga inicial de configuración
+            // 2. Carga inicial de configuración desde el JSON
             var config = ConfigService.Load();
 
-            // 2. Rectificación del Log para InfluxDB
+            // 3. Log de inicio rectificado para InfluxDB
             txtConsola.AppendText($"\n[{DateTime.Now:HH:mm:ss}] [SISTEMA] Configuración Vertex-IoT cargada.");
-            txtConsola.AppendText($"\n[{DateTime.Now:HH:mm:ss}] [DATABASE] Nodo InfluxDB detectado: {config.InfluxUrl}");
+            txtConsola.AppendText($"\n[{DateTime.Now:HH:mm:ss}] [DATABASE] Conectado a Nodo: {config.InfluxUrl}");
             txtConsola.AppendText($"\n[{DateTime.Now:HH:mm:ss}] [DATABASE] Bucket activo: {config.InfluxBucket}");
-
-            // Opcional: Escribir el estado inicial en la consola
-            txtConsola.AppendText($"\n[{DateTime.Now:HH:mm:ss}] Sistema Vertex-IoT iniciado. Estado: OFFLINE");
+            txtConsola.AppendText($"\n[{DateTime.Now:HH:mm:ss}] Sistema listo. Estado actual: OFFLINE");
 
             txtConsola.ScrollToEnd();
         }
@@ -45,90 +38,85 @@ namespace Sistema_de_Monitoreo_Industrial.Views
             var toggle = sender as System.Windows.Controls.Primitives.ToggleButton;
             var vm = this.DataContext as MainViewModel;
 
+            // Obtenemos el Storyboard de alerta por si necesitamos detenerlo
+            var sbAlerta = (Storyboard)this.FindResource("AlertaCriticaStoryboard");
+
             if (toggle.IsChecked == true)
             {
                 // --- MODO ONLINE ---
                 toggle.Content = "DESCONECTAR";
 
-                // 1. Cambiar LED a Verde
+                // LED Verde (Normal)
                 LedOnline.Fill = new SolidColorBrush(Color.FromRgb(0, 255, 0));
 
-                // 2. Cambiar Texto y Color (Naranja)
-                txtEstadoConexion.Text = "CONEXIÓN ACTIVA | PROTOCOLO MQTT-PRO";
+                // Texto informativo ajustado a InfluxDB
+                txtEstadoConexion.Text = "TELEMETRÍA ACTIVA | INFLUXDB SERIES";
                 txtEstadoConexion.Foreground = (SolidColorBrush)Application.Current.Resources["OrangeAccent"];
 
                 if (vm != null) vm.IsConnected = true;
 
-                txtConsola.AppendText($"\n[{DateTime.Now:HH:mm:ss}] SESIÓN INICIADA: Recibiendo datos de planta.");
+                txtConsola.AppendText($"\n[{DateTime.Now:HH:mm:ss}] [SISTEMA] Sesión iniciada. Consultando series temporales.");
             }
             else
             {
                 // --- MODO OFFLINE ---
                 toggle.Content = "CONECTAR SISTEMA";
 
-                // 1. Cambiar LED a Rojo
+                // Detenemos cualquier alerta roja parpadeante si existía
+                sbAlerta.Stop();
+
+                // LED Rojo fijo
                 LedOnline.Fill = new SolidColorBrush(Colors.Red);
 
-                // 2. Cambiar Texto y Color (Gris)
-                txtEstadoConexion.Text = "SISTEMA OFFLINE | DESCONECTADO";
+                txtEstadoConexion.Text = "SISTEMA EN PAUSA | DESCONECTADO";
                 txtEstadoConexion.Foreground = new SolidColorBrush(Colors.Gray);
 
                 if (vm != null) vm.IsConnected = false;
 
-                var sb = (System.Windows.Media.Animation.Storyboard)this.FindResource("AlertaCriticaStoryboard");
-                sb.Stop();
-
-                LedOnline.Fill = new SolidColorBrush(Colors.Red); // Rojo fijo de "Parado"
-
-                txtConsola.AppendText($"\n[{DateTime.Now:HH:mm:ss}] ADVERTENCIA: Sistema fuera de línea.");
+                txtConsola.AppendText($"\n[{DateTime.Now:HH:mm:ss}] [ADVERTENCIA] El usuario ha detenido el monitoreo.");
             }
 
             txtConsola.ScrollToEnd();
         }
 
-        /// <summary>
-        /// Manejador del evento clic para el botón "+ AÑADIR GRÁFICO"
-        /// </summary>
         private void BtnAdd_Click(object sender, RoutedEventArgs e)
         {
-            // Creamos la instancia de la ventana de configuración
             AddChartWindow dialog = new AddChartWindow();
-
-            // Establecemos esta ventana como dueña para que el diálogo aparezca centrado sobre ella
             dialog.Owner = this;
 
-            // Mostramos la ventana como un diálogo modal (bloquea la principal hasta cerrar)
             if (dialog.ShowDialog() == true)
             {
-                // Si el usuario presionó "AÑADIR", recuperamos el widget creado
-                var nuevoWidget = dialog.CreatedWidget;
+                // Esto es un ChartWidgetConfig
+                var config = dialog.CreatedWidget;
 
-                if (nuevoWidget != null)
+                if (config != null)
                 {
-                    // Lo agregamos a la colección observable del ViewModel
-                    // WPF detectará este cambio automáticamente y dibujará el widget
-                    _viewModel.AgregarWidgetExterno(nuevoWidget);
+                    // Ahora el VM procesa la configuración y crea el objeto visual
+                    _viewModel.AgregarWidgetExterno(config);
                 }
+            }
+        }
+
+        private void btnConfig_Click(object sender, RoutedEventArgs e)
+        {
+            ConfigWindow win = new ConfigWindow();
+            win.Owner = this;
+
+            if (win.ShowDialog() == true)
+            {
+                // Recargamos configuración para aplicar cambios de URL/Token inmediatamente
+                var config = ConfigService.Load();
+
+                txtConsola.AppendText($"\n[{DateTime.Now:HH:mm:ss}] [SISTEMA] Configuración actualizada.");
+                txtConsola.AppendText($"\n[{DateTime.Now:HH:mm:ss}] [DATABASE] Nueva IP Nodo: {config.InfluxUrl}");
+                txtConsola.ScrollToEnd();
             }
         }
 
         private void BtnLimpiarConsola_Click(object sender, RoutedEventArgs e)
         {
             txtConsola.Clear();
-            txtConsola.Text = $"[{DateTime.Now:HH:mm:ss}] Consola limpiada.";
-        }
-
-        private void btnConfig_Click(object sender, RoutedEventArgs e)
-        {
-            ConfigWindow win = new ConfigWindow();
-            win.Owner = this; // Para que aparezca centrada sobre la principal
-
-            if (win.ShowDialog() == true)
-            {
-                // Si pulsó guardar, actualizaremos la consola
-                txtConsola.AppendText($"\n[{DateTime.Now:HH:mm:ss}] Configuración actualizada y guardada.");
-                txtConsola.ScrollToEnd();
-            }
+            txtConsola.Text = $"[{DateTime.Now:HH:mm:ss}] Consola reseteada por el operador.";
         }
     }
 }

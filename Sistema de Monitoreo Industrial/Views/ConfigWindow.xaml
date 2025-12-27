@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Configuración del Sistema | Vertex-IoT" 
         Height="564" Width="400"
-        Background="{StaticResource FondoOscuro}"
+        Background="Transparent"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
         WindowStyle="None"

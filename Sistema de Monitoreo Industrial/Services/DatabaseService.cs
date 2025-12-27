@@ -48,19 +48,26 @@ namespace Sistema_de_Monitoreo_Industrial.Services
 
                     foreach (var record in tables.SelectMany(t => t.Records))
                     {
-                        lista.Add(new DatosProduccion
+                        var dato = new DatosProduccion
                         {
                             Timestamp = record.GetTime()?.ToDateTimeUtc().ToLocalTime() ?? DateTime.Now,
-                            NodoOrigen = record.GetValueByKey("id_robot")?.ToString() ?? "N/A",
-                            Latencia = Convert.ToDouble(record.GetValueByKey("latencia_ms") ?? 0.0),
-                            Temperatura = Convert.ToDouble(record.GetValueByKey("temperatura_motor_C") ?? 0.0),
-                            OEE = Convert.ToDouble(record.GetValueByKey("oee") ?? 0.0),
-                            ConteoPiezas = Convert.ToInt32(record.GetValueByKey("conteo_piezas") ?? 0),
-                            Vibracion = Convert.ToDouble(record.GetValueByKey("vibracion_mm_s") ?? 0.0),
-                            ConsumoKwh = Convert.ToDouble(record.GetValueByKey("consumo_kwh") ?? 0.0),
-                            Lote = record.GetValueByKey("lote_produccion")?.ToString() ?? "S/L",
-                            Estado = record.GetValueByKey("estado_operacional")?.ToString() ?? "FALLA"
-                        });
+                            NodoOrigen = record.GetValueByKey("id_robot")?.ToString() ?? "N/A"
+                        };
+
+                        // Recorremos todos los valores del registro
+                        foreach (var entry in record.Values)
+                        {
+                            // Ignoramos columnas que son metadatos (tiempo, tabla, etc)
+                            if (entry.Key.StartsWith("_") || entry.Key == "id_robot" || entry.Key == "result" || entry.Key == "table")
+                                continue;
+
+                            if (entry.Value != null && double.TryParse(entry.Value.ToString(), out double val))
+                            {
+                                // Guardamos la métrica con el nombre exacto que viene de la DB
+                                dato.Metricas[entry.Key] = val;
+                            }
+                        }
+                        lista.Add(dato);
                     }
                 }
             }
@@ -76,6 +83,55 @@ namespace Sistema_de_Monitoreo_Industrial.Services
             }
 
             return lista;
+        }
+
+        //Metodo para obtener los robots que existen en la base de datos
+        public async Task<List<string>> ObtenerRobotsDisponibles()
+        {
+            var robots = new List<string>();
+            try
+            {
+                using var client = new InfluxDBClient(_settings.InfluxUrl, _settings.InfluxToken);
+                // Consulta Flux para obtener valores únicos de la etiqueta 'id_robot'
+                string query = $@"import ""influxdata/influxdb/schema""
+                          schema.tagValues(bucket: ""{_settings.InfluxBucket}"", tag: ""id_robot"")";
+
+                var tables = await client.GetQueryApi().QueryAsync(query, _settings.InfluxOrg);
+
+                foreach (var record in tables.SelectMany(t => t.Records))
+                {
+                    robots.Add(record.GetValue().ToString());
+                }
+            }
+            catch (Exception ex) { /* Manejar error en consola */ }
+            return robots.Any() ? robots : new List<string> { "Sin Robots Detectados" };
+        }
+
+        //Metodo para obtener con valores únicos de campos (variables) para un robot específico
+        public async Task<List<string>> ObtenerCamposPorRobot(string robotId)
+        {
+            var campos = new List<string>();
+            try
+            {
+                using var client = new InfluxDBClient(_settings.InfluxUrl, _settings.InfluxToken);
+
+                // Esta consulta busca todos los nombres de columnas (_field) para un robot específico
+                string query = $@"
+            from(bucket: ""{_settings.InfluxBucket}"")
+            |> range(start: -30d) 
+            |> filter(fn: (r) => r[""id_robot""] == ""{robotId}"")
+            |> keep(columns: [""_field""])
+            |> distinct(column: ""_field"")";
+
+                var tables = await client.GetQueryApi().QueryAsync(query, _settings.InfluxOrg);
+
+                foreach (var record in tables.SelectMany(t => t.Records))
+                {
+                    campos.Add(record.GetValue().ToString());
+                }
+            }
+            catch (Exception ex) { /* Log en consola */ }
+            return campos;
         }
 
         // Método auxiliar para escribir en la consola de la MainWindow

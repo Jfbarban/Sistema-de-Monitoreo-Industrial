@@ -51,15 +51,41 @@ namespace Sistema_de_Monitoreo_Industrial.ViewModels
             // (Ver abajo en MainWindow.xaml.cs para la integración fácil)
         }
 
-        public void AgregarWidgetExterno(WidgetBaseViewModel widget)
+        public void AgregarWidgetExterno(ChartWidgetConfig config)
         {
-            // Configurar borrado
-            widget.OnRemoveRequested = (w) => Widgets.Remove(w);
-            Widgets.Add(widget);
+            WidgetBaseViewModel nuevoWidgetVm = null;
+
+            // "Fábrica" de Widgets: Según el tipo elegido en la ventana, creamos el VM adecuado
+            switch (config.ChartType)
+            {
+                case "Signal":
+                    nuevoWidgetVm = new WidgetSignalViewModel(config.Title, config.RobotId, config.VariableTag);
+                    break;
+                case "Gauge":
+                    nuevoWidgetVm = new WidgetGaugeViewModel(config.Title, config.RobotId, config.VariableTag);
+                    break;
+                case "Bar":
+                    nuevoWidgetVm = new WidgetBarViewModel(config.Title, config.RobotId, config.VariableTag);
+                    break;
+                case "Status":
+                    nuevoWidgetVm = new WidgetStatusViewModel(config.Title, config.RobotId, config.VariableTag);
+                    break;
+            }
+
+            if (nuevoWidgetVm != null)
+            {
+                // Configuramos la acción de borrado que ya tenías
+                nuevoWidgetVm.OnRemoveRequested = (w) => Widgets.Remove(w);
+
+                // Lo añadimos a la colección observable para que aparezca en la UI
+                Widgets.Add(nuevoWidgetVm);
+            }
         }
 
         private async Task LoopDatos()
         {
+            if (!IsConnected) return;
+
             var datos = await _dbService.ObtenerUltimaTelemetria();
             if (datos == null || !datos.Any()) return;
 

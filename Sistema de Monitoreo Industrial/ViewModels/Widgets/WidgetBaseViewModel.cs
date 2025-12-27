@@ -11,42 +11,35 @@ namespace Sistema_de_Monitoreo_Industrial.ViewModels.Widgets
         private string _title;
         public string Title { get => _title; set => SetProperty(ref _title, value); }
 
-        public string RobotId { get; set; }      // Filtro ID
-        public string PropertyName { get; set; } // Filtro Variable
+        public string RobotId { get; set; }     // Filtro ID (Ej: "Envasado-01")
+        public string VariableTag { get; set; } // Nombre de la métrica (Ej: "presion", "temperatura")
 
-        // Comando para cerrar este widget
         public ICommand RemoveCommand { get; private set; }
         public Action<WidgetBaseViewModel> OnRemoveRequested;
 
-        public WidgetBaseViewModel(string title, string robotId, string propertyName)
+        // EL CONSTRUCTOR DEBE RECIBIR Y ASIGNAR LA VARIABLE
+        public WidgetBaseViewModel(string title, string robotId, string variableTag)
         {
             Title = title;
             RobotId = robotId;
-            PropertyName = propertyName;
+            VariableTag = variableTag; // <-- AQUÍ SE RECIBE EL VALOR DEL COMBOBOX
+
             RemoveCommand = new RelayCommand(_ => OnRemoveRequested?.Invoke(this));
         }
 
-        // Método abstracto que las gráficas específicas implementarán
         public abstract void Update(DatosProduccion dato);
 
-        // Magia: Obtiene el valor de "Temperatura" o "OEE" usando el nombre string
         protected double ExtractValue(DatosProduccion dato)
         {
-            var prop = typeof(DatosProduccion).GetProperty(PropertyName);
-            if (prop == null) return 0.0;
+            // Ahora VariableTag ya no será nulo porque viene desde el constructor
+            if (dato == null || string.IsNullOrEmpty(VariableTag)) return 0;
 
-            var val = prop.GetValue(dato);
-
-            // Lógica para convertir el texto del Estado en número para la gráfica
-            if (PropertyName == "Estado")
+            if (dato.Metricas != null && dato.Metricas.TryGetValue(VariableTag, out double valor))
             {
-                string status = val?.ToString().ToUpper() ?? "";
-                if (status == "PRODUCCION") return 1.0;
-                if (status == "MANTENIMIENTO") return 0.5;
-                return 0.0;
+                return valor;
             }
 
-            return Convert.ToDouble(val ?? 0.0);
+            return 0;
         }
     }
 }

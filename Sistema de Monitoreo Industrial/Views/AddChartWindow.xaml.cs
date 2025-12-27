@@ -1,74 +1,110 @@
-﻿using System.Windows;
+﻿using Sistema_de_Monitoreo_Industrial.Models;
+using Sistema_de_Monitoreo_Industrial.Services;
+using System.Collections.Generic;
+using System.Windows;
 using System.Windows.Controls;
-using Sistema_de_Monitoreo_Industrial.ViewModels.Widgets;
 
 namespace Sistema_de_Monitoreo_Industrial.Views
 {
     public partial class AddChartWindow : Window
     {
-        public WidgetBaseViewModel CreatedWidget { get; private set; }
+        private DatabaseService _dbService = new DatabaseService();
 
-        public AddChartWindow() => InitializeComponent();
+        // Propiedad que leerá la MainWindow tras el ShowDialog
+        public ChartWidgetConfig CreatedWidget { get; private set; }
+
+        public AddChartWindow()
+        {
+            InitializeComponent();
+            CargarListasDinamicas();
+        }
+
+        private async void CargarListasDinamicas()
+        {
+            // 1. Cargamos Tipos de Gráficos
+            CmbType.ItemsSource = new List<object> {
+                new { Nombre = "Señal Temporal (Líneas)", Tag = "Signal" },
+                new { Nombre = "Medidor Radial (Gauge)", Tag = "Gauge" },
+                new { Nombre = "Producción Acumulada (Barras)", Tag = "Bar" },
+                new { Nombre = "Estado Operacional (Status)", Tag = "Status" }
+            };
+            CmbType.SelectedIndex = 0;
+
+            // 2. Cargamos Variables (Nombres amigables vs Nombres en InfluxDB)
+            CmbProp.ItemsSource = new List<object> {
+                new { Nombre = "Temperatura Motor", Tag = "Temperatura" },
+                new { Nombre = "Eficiencia OEE", Tag = "OEE" },
+                new { Nombre = "Latencia de Red", Tag = "Latencia" },
+                new { Nombre = "Vibración Eje X", Tag = "Vibracion" },
+                new { Nombre = "Conteo de Piezas", Tag = "ConteoPiezas" }
+            };
+            CmbProp.SelectedIndex = 0;
+
+            // 3. CARGA REALMENTE DINÁMICA: Consultamos los robots existentes en la DB
+            var robotsDetectados = await _dbService.ObtenerRobotsDisponibles();
+            CmbRobot.ItemsSource = robotsDetectados;
+
+            if (CmbRobot.Items.Count > 0)
+                CmbRobot.SelectedIndex = 0;
+        }
+
+        private async void CmbRobot_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (CmbRobot.SelectedItem == null) return;
+
+            string robotSeleccionado = CmbRobot.SelectedItem.ToString();
+
+            // Mostramos un estado de carga opcional
+            CmbProp.IsEnabled = false;
+
+            // Obtenemos los campos reales de la DB para ese robot
+            var campos = await _dbService.ObtenerCamposPorRobot(robotSeleccionado);
+
+            // Mapeamos a una lista de objetos para mantener la estructura Nombre/Tag
+            // Aquí puedes usar un diccionario para poner nombres bonitos si lo deseas, 
+            // pero por defecto usamos el nombre técnico de la DB.
+            CmbProp.ItemsSource = campos.Select(c => new {
+                Nombre = FormatearNombreCampo(c),
+                Tag = c
+            }).ToList();
+
+            CmbProp.SelectedIndex = 0;
+            CmbProp.IsEnabled = true;
+        }
+
+        // Método simple para que "temperatura_motor" se vea como "Temperatura Motor"
+        private string FormatearNombreCampo(string tecnico)
+        {
+            if (string.IsNullOrEmpty(tecnico)) return tecnico;
+            return System.Globalization.CultureInfo.CurrentCulture.TextInfo
+                   .ToTitleCase(tecnico.Replace("_", " ").ToLower());
+        }
+
+        private void BtnCancelar_Click(object sender, RoutedEventArgs e) => this.Close();
+
+        private void CmbType_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e) { /* Lógica de UI */ }
 
         private void BtnAdd_Click(object sender, RoutedEventArgs e)
         {
-            string title = TxtTitle.Text;
-            string type = (CmbType.SelectedItem as ComboBoxItem).Tag.ToString();
-            string robot = (CmbRobot.SelectedItem as ComboBoxItem).Tag.ToString();
-
-            // Obtenemos la variable seleccionada por defecto
-            string prop = (CmbProp.SelectedItem as ComboBoxItem).Tag.ToString();
-
-            // LÓGICA AUTOMÁTICA:
-            // Si es un gráfico de estado, forzamos que lea la propiedad "Estado" 
-            // independientemente de lo que diga el ComboBox de variables.
-            if (type == "Status")
+            // 1. Validaciones básicas
+            if (string.IsNullOrWhiteSpace(TxtTitle.Text) || CmbRobot.SelectedItem == null)
             {
-                prop = "Estado";
+                // Aquí podrías usar tu ConfirmDialog como aviso
+                return;
             }
 
-            switch (type)
+            // 2. Creamos el objeto con la selección del usuario
+            CreatedWidget = new ChartWidgetConfig
             {
-                case "Signal": CreatedWidget = new WidgetSignalViewModel(title, robot, prop); break;
-                case "Gauge": CreatedWidget = new WidgetGaugeViewModel(title, robot, prop); break;
-                case "Bar": CreatedWidget = new WidgetBarViewModel(title, robot, prop); break;
-                case "Status": CreatedWidget = new WidgetStatusViewModel(title, robot, prop); break;
-            }
+                Title = TxtTitle.Text,
+                ChartType = (CmbType.SelectedItem as dynamic).Tag,
+                VariableTag = (CmbProp.SelectedItem as dynamic).Tag,
+                RobotId = CmbRobot.SelectedItem.ToString()
+            };
 
+            // 3. Cerramos con éxito
             this.DialogResult = true;
             this.Close();
-        }
-
-        private void CmbType_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            // Verificamos que los componentes ya existan (evita errores al abrir la ventana)
-            if (CmbProp == null || TxtTitle == null) return;
-
-            var selectedItem = CmbType.SelectedItem as ComboBoxItem;
-            if (selectedItem == null) return;
-
-            string tipoElegido = selectedItem.Tag.ToString();
-
-            if (tipoElegido == "Status")
-            {
-                // 1. Bloqueamos el selector de variables
-                CmbProp.IsEnabled = false;
-
-                // 2. Opcional: Cambiamos el título automáticamente para ayudar al usuario
-                TxtTitle.Text = "Estado Operacional";
-
-                // 3. Opcional: Podemos cambiar la opacidad para que se vea más claro el bloqueo
-                CmbProp.Opacity = 0.5;
-            }
-            else
-            {
-                // Si elige cualquier otro, rehabilitamos el selector
-                CmbProp.IsEnabled = true;
-                CmbProp.Opacity = 1.0;
-
-                // Sugerencia de título genérico
-                TxtTitle.Text = "Monitoreo de " + (CmbProp.SelectedItem as ComboBoxItem).Content;
-            }
         }
     }
 }
