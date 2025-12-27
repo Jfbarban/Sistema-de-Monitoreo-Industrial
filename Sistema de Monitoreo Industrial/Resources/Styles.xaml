@@ -446,4 +446,9 @@
         <v:LabelWidgetView />
     </DataTemplate>
 
+    <Style x:Key="BtnSave" TargetType="Button" BasedOn="{StaticResource BtnEstiloBase}">
+        <Setter Property="Background" Value="#2ECC71"/>
+        <Setter Property="Height" Value="38"/>
+    </Style>
+
 </ResourceDictionary>

@@ -5,15 +5,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Media; // Para acceder a Application.Current
+using System.Windows.Media;
+using System.Windows.Media.Animation; // Para acceder a Application.Current
 
 namespace Sistema_de_Monitoreo_Industrial.Services
 {
     public class DatabaseService
     {
         private readonly AppSettings _settings;
-        private int _reintentosFallidos = 0;
-        private const int MaxReintentos = 3;
+        public int _reintentosFallidos = 0;
+        private const int MaxReintentos = 6;
+        public bool _Conectado = false;
 
         public DatabaseService()
         {
@@ -22,11 +24,14 @@ namespace Sistema_de_Monitoreo_Industrial.Services
 
         public async Task<List<DatosProduccion>> ObtenerUltimaTelemetria()
         {
+
             var lista = new List<DatosProduccion>();
 
             try
             {
+
                 using var client = new InfluxDBClient(_settings.InfluxUrl, _settings.InfluxToken);
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(1));
 
                 string query = $@"from(bucket: ""{_settings.InfluxBucket}"")
                     |> range(start: -1m)
@@ -35,7 +40,7 @@ namespace Sistema_de_Monitoreo_Industrial.Services
                     |> sort(columns: [""_time""], desc: true)
                     |> limit(n: 20)";
 
-                var tables = await client.GetQueryApi().QueryAsync(query, _settings.InfluxOrg);
+                var tables = await client.GetQueryApi().QueryAsync(query, _settings.InfluxOrg, cts.Token);
 
                 if (tables != null)
                 {
@@ -70,11 +75,16 @@ namespace Sistema_de_Monitoreo_Industrial.Services
             catch (Exception ex)
             {
                 _reintentosFallidos++;
-                LogConsola("ERROR", $"Fallo en lectura InfluxDB (Intento {_reintentosFallidos}/{MaxReintentos}): {ex.Message}", "#FF4444");
-
-                if (_reintentosFallidos >= MaxReintentos)
+                if (_reintentosFallidos <= MaxReintentos)
                 {
-                    LogConsola("CRÍTICO", "Se alcanzó el máximo de reintentos. Verifique la configuración de red.", "#FF0000");
+                    LogConsola("ERROR", $"Fallo en lectura InfluxDB (Intento {_reintentosFallidos}/{MaxReintentos}): {ex.Message}", "#FF4444");
+
+                    if (_reintentosFallidos == MaxReintentos)
+                    {
+                        LogConsola("CRÍTICO", "Se alcanzó el máximo de reintentos. Verifique la configuración de red.", "#FF0000");
+                        _Conectado = true;
+                        return null;
+                    }
                 }
             }
 
@@ -113,11 +123,11 @@ namespace Sistema_de_Monitoreo_Industrial.Services
 
                 // Esta consulta busca todos los nombres de columnas (_field) para un robot específico
                 string query = $@"
-            from(bucket: ""{_settings.InfluxBucket}"")
-            |> range(start: -30d) 
-            |> filter(fn: (r) => r[""id_robot""] == ""{robotId}"")
-            |> keep(columns: [""_field""])
-            |> distinct(column: ""_field"")";
+                    from(bucket: ""{_settings.InfluxBucket}"")
+                    |> range(start: -30d) 
+                    |> filter(fn: (r) => r[""id_robot""] == ""{robotId}"")
+                    |> keep(columns: [""_field""])
+                    |> distinct(column: ""_field"")";
 
                 var tables = await client.GetQueryApi().QueryAsync(query, _settings.InfluxOrg);
 
@@ -131,31 +141,46 @@ namespace Sistema_de_Monitoreo_Industrial.Services
         }
 
         // Método auxiliar para escribir en la consola de la MainWindow
-        private void LogConsola(string categoria, string mensaje, string colorHex)
+        public void LogConsola(string categoria, string mensaje, string colorHex)
         {
             Application.Current.Dispatcher.Invoke(() =>
             {
                 var mainWin = Application.Current.MainWindow as Sistema_de_Monitoreo_Industrial.Views.MainWindow;
-                if (mainWin != null)
+                if (mainWin == null) return;
+
+                // 1. Escribir en consola
+                string logMsg = $"\n[{DateTime.Now:HH:mm:ss}] [{categoria}] {mensaje}";
+                mainWin.txtConsola.AppendText(logMsg);
+                mainWin.txtConsola.ScrollToEnd();
+
+                // 2. Buscar Storyboard de forma segura
+                var sb = mainWin.FindResource("AlertaCriticaStoryboard") as System.Windows.Media.Animation.Storyboard;
+                if (sb == null) return;
+
+                // 3. Lógica de estados del LED
+                if (categoria == "CRÍTICO")
                 {
-                    // 1. Escribir en consola
-                    string logMsg = $"\n[{DateTime.Now:HH:mm:ss}] [{categoria}] {mensaje}";
-                    mainWin.txtConsola.AppendText(logMsg);
-                    mainWin.txtConsola.ScrollToEnd();
+                    // 1. Buscamos el recurso original
+                    var sbOriginal = mainWin.FindResource("AlertaCriticaStoryboard") as System.Windows.Media.Animation.Storyboard;
 
-                    // 2. Control visual del LED según categoría
-                    var sb = (System.Windows.Media.Animation.Storyboard)mainWin.FindResource("AlertaCriticaStoryboard");
+                    if (sbOriginal != null)
+                    {
+                        // 2. IMPORTANTE: Clonamos el storyboard para que sea editable
+                        var sbEditable = sbOriginal.Clone();
+                        // 3. Ahora sí podemos establecer el target sin el error de "Solo lectura"
+                        Storyboard.SetTarget(sbEditable, mainWin.LedOnline);
 
-                    if (categoria == "CRÍTICO")
-                    {
-                        mainWin.LedOnline.Fill = new SolidColorBrush(Colors.Red);
-                        sb.Begin(); // Inicia parpadeo rápido
+                        // 4. Iniciamos la copia editable
+                        sbEditable.Begin();
                     }
-                    else if (categoria == "SISTEMA" && _reintentosFallidos == 0)
-                    {
-                        sb.Stop(); // Detiene parpadeo
-                        mainWin.LedOnline.Fill = new SolidColorBrush(Color.FromRgb(0, 255, 0)); // Vuelve a Verde
-                    }
+
+                    mainWin.LedOnline.Fill = new SolidColorBrush(Colors.Red);
+                }
+                else if (categoria == "SISTEMA" && _reintentosFallidos == 0)
+                {
+                    // Detenemos cualquier animación activa en ese objeto
+                    sb.Stop(mainWin);
+                    mainWin.LedOnline.Fill = new SolidColorBrush(Color.FromRgb(0, 255, 0)); // Verde
                 }
             });
         }

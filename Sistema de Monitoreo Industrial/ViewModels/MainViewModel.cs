@@ -90,7 +90,18 @@ namespace Sistema_de_Monitoreo_Industrial.ViewModels
             if (!IsConnected) return;
 
             var datos = await _dbService.ObtenerUltimaTelemetria();
-            if (datos == null || !datos.Any()) return;
+
+            if (datos == null && _dbService._Conectado)
+            {
+                // --- AQUÍ SE DESCONECTA EL SISTEMA ---
+                _timer.Stop(); // Detenemos el reloj permanentemente
+
+                // Usamos el Storyboard que arreglamos con el Clone() 
+                // para dejar el LED en rojo fijo
+                _dbService.LogConsola("SISTEMA", "Motor de telemetría detenido. Intervención requerida.", "#FF0000");
+
+                return;
+            }
 
             // Ordenamos por tiempo descendente
             var dataOrdenada = datos.OrderByDescending(d => d.Timestamp).ToList();

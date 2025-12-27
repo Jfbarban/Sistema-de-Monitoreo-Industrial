@@ -5,7 +5,7 @@
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         WindowStartupLocation="CenterOwner" ShowInTaskbar="False" ResizeMode="NoResize">
 
-    <Border Background="#1E1E1E" CornerRadius="12" BorderBrush="{StaticResource OrangeAccent}" BorderThickness="1.5">
+    <Border Background="#1E1E1E" CornerRadius="15" BorderBrush="{StaticResource OrangeAccent}" BorderThickness="1.5">
         <Grid Margin="20">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*"/>
@@ -22,27 +22,27 @@
                        LineHeight="18"/>
 
             <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,15,0,0">
+
                 <Button x:Name="btnAceptar" 
                         Content="SÍ, PROCEDER" 
                         Click="BtnSi_Click" 
-                        Width="120" Height="32" 
-                        Style="{StaticResource BtnPlay}" 
-                        FontWeight="Bold" 
-                        Margin="0,0,10,0"/>
-
-                <Button x:Name="btnCancelar" 
-                        Content="CANCELAR" 
-                        Click="BtnNo_Click" 
-                        Width="120" Height="32" 
-                        Background="#333" 
+                        Width="130" Height="35" 
+                        Background="{StaticResource OrangeAccent}" 
                         Foreground="White" 
-                        Margin="10,0,0,0">
+                        FontWeight="Bold" 
+                        Margin="0,0,10,0"
+                        Cursor="Hand">
                     <Button.Style>
                         <Style TargetType="Button">
+                            <Setter Property="BorderBrush" Value="Transparent"/>
+                            <Setter Property="BorderThickness" Value="1.5"/>
                             <Setter Property="Template">
                                 <Setter.Value>
                                     <ControlTemplate TargetType="Button">
-                                        <Border Background="{TemplateBinding Background}" CornerRadius="5">
+                                        <Border Background="{TemplateBinding Background}" 
+                                                CornerRadius="8"
+                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                BorderThickness="{TemplateBinding BorderThickness}">
                                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                         </Border>
                                     </ControlTemplate>
@@ -50,12 +50,64 @@
                             </Setter>
                             <Style.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="Background" Value="#444"/>
+                                    <Setter Property="Background" Value="#FF8000"/>
+                                    <Setter Property="BorderBrush" Value="White"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter Property="RenderTransform">
+                                        <Setter.Value>
+                                            <ScaleTransform ScaleX="0.92" ScaleY="0.92"/>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
                                 </Trigger>
                             </Style.Triggers>
                         </Style>
                     </Button.Style>
                 </Button>
+
+                <Button x:Name="btnCancelar" 
+                        Content="CANCELAR" 
+                        Click="BtnNo_Click" 
+                        Width="130" Height="35" 
+                        Background="#2D2D2D" 
+                        Foreground="White" 
+                        Margin="10,0,0,0"
+                        Cursor="Hand">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="BorderBrush" Value="Transparent"/>
+                            <Setter Property="BorderThickness" Value="1.5"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}" 
+                                                CornerRadius="8"
+                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                BorderThickness="{TemplateBinding BorderThickness}">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="#3D3D3D"/>
+                                    <Setter Property="BorderBrush" Value="{StaticResource OrangeAccent}"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter Property="RenderTransform">
+                                        <Setter.Value>
+                                            <ScaleTransform ScaleX="0.92" ScaleY="0.92"/>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+
             </StackPanel>
         </Grid>
     </Border>

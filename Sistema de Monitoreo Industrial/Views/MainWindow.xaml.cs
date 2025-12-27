@@ -1,81 +1,306 @@
-﻿using System;
-using System.Windows;
-using System.Windows.Media;
-using System.Windows.Media.Animation;
+﻿using Sistema_de_Monitoreo_Industrial.Models;
 using Sistema_de_Monitoreo_Industrial.Services;
 using Sistema_de_Monitoreo_Industrial.ViewModels;
-using Sistema_de_Monitoreo_Industrial.Views;
+using Sistema_de_Monitoreo_Industrial.ViewModels.Widgets;
+using System;
+using System.Collections.Generic;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Animation;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Sistema_de_Monitoreo_Industrial.Views
 {
     public partial class MainWindow : Window
     {
         private readonly MainViewModel _viewModel;
+        private DashboardService _dashboardService = new DashboardService();
+
+        private string rutaMasterDashboards = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "dashboards_master.json");
 
         public MainWindow()
         {
             InitializeComponent();
 
-            // 1. Estado inicial del botón y ViewModel
+            // 1. Estado inicial
             btnConectar.IsChecked = false;
             _viewModel = new MainViewModel();
             this.DataContext = _viewModel;
 
-            // 2. Carga inicial de configuración desde el JSON
+            // 2. Carga configuración InfluxDB
             var config = ConfigService.Load();
 
-            // 3. Log de inicio rectificado para InfluxDB
+            // 3. Log de inicio
             txtConsola.AppendText($"\n[{DateTime.Now:HH:mm:ss}] [SISTEMA] Configuración Vertex-IoT cargada.");
             txtConsola.AppendText($"\n[{DateTime.Now:HH:mm:ss}] [DATABASE] Conectado a Nodo: {config.InfluxUrl}");
             txtConsola.AppendText($"\n[{DateTime.Now:HH:mm:ss}] [DATABASE] Bucket activo: {config.InfluxBucket}");
             txtConsola.AppendText($"\n[{DateTime.Now:HH:mm:ss}] Sistema listo. Estado actual: OFFLINE");
 
+            // NUEVO: Cargar lista de dashboards en el panel lateral al arrancar
+            RefrescarListaDashboards();
+
             txtConsola.ScrollToEnd();
+        }        
+
+        private void BtnCargarDashboard_Click(object sender, RoutedEventArgs e)
+        {
+            var btn = sender as Button;
+            string nombre = btn?.Tag as string;
+
+            if (!string.IsNullOrEmpty(nombre))
+            {
+                var configs = _dashboardService.Cargar(nombre);
+                if (configs != null)
+                {
+                    _viewModel.Widgets.Clear();
+                    foreach (var c in configs)
+                    {
+                        _viewModel.AgregarWidgetExterno(c);
+                    }
+                    txtConsola.AppendText($"\n[{DateTime.Now:HH:mm:ss}] [STORAGE] Dashboard '{nombre}' cargado.");
+                    txtConsola.ScrollToEnd();
+                }
+            }
         }
+
+        // --- REFRESCAR PANEL (Desde un único archivo) ---
+        private void RefrescarListaDashboards()
+        {
+            try
+            {
+                panelDashboardsSaved.Children.Clear();
+
+                if (!System.IO.File.Exists(rutaMasterDashboards)) return;
+
+                string json = System.IO.File.ReadAllText(rutaMasterDashboards);
+                var todosLosDashboards = System.Text.Json.JsonSerializer.Deserialize<List<DashboardLayout>>(json);
+
+                if (todosLosDashboards == null) return;
+
+                foreach (var dash in todosLosDashboards)
+                {
+                    DockPanel itemPanel = new DockPanel { Margin = new Thickness(0, 0, 0, 8) };
+
+                    // BOTÓN ELIMINAR
+                    Button btnDelete = CreateCircularDeleteButton();
+                    btnDelete.Click += (s, e) => { ConfirmarEliminarDashboardMaster(dash.Nombre); };
+                    DockPanel.SetDock(btnDelete, Dock.Right);
+
+                    // BOTÓN DE CARGA
+                    Button btnDash = new Button
+                    {
+                        Content = $"📊  {dash.Nombre.ToUpper()}",
+                        Style = (Style)this.FindResource("BtnDark"),
+                        Height = 40,
+                        HorizontalContentAlignment = HorizontalAlignment.Left,
+                        Padding = new Thickness(12, 0, 0, 0)
+                    };
+                    btnDash.Click += (s, e) => { CargarDesdeObjeto(dash); };
+
+                    itemPanel.Children.Add(btnDelete);
+                    itemPanel.Children.Add(btnDash);
+                    panelDashboardsSaved.Children.Add(itemPanel);
+                }
+            }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine("Error: " + ex.Message); }
+        }
+
+        // --- GUARDAR EN EL ARCHIVO MAESTRO ---
+        private void BtnGuardarLayout_Click(object sender, RoutedEventArgs e)
+        {
+            InputWindow input = new InputWindow { Owner = this };
+            if (input.ShowDialog() != true) return;
+
+            string nombreNuevo = input.Respuesta;
+
+            // 1. Crear la "receta" del dashboard actual
+            var nuevoDash = new DashboardLayout { Nombre = nombreNuevo };
+            foreach (var widgetVM in _viewModel.Widgets)
+            {
+                nuevoDash.Widgets.Add(new ChartWidgetConfig
+                {
+                    Title = widgetVM.Title,
+                    ChartType = GetWidgetTypeString(widgetVM), // Método auxiliar para identificar el tipo
+                    RobotId = widgetVM.RobotId,
+                    VariableTag = widgetVM.VariableTag
+                });
+            }
+
+            // 2. Cargar lista existente o crear nueva
+            List<DashboardLayout> listaMaster = new List<DashboardLayout>();
+            if (System.IO.File.Exists(rutaMasterDashboards))
+            {
+                string jsonExistente = System.IO.File.ReadAllText(rutaMasterDashboards);
+                listaMaster = System.Text.Json.JsonSerializer.Deserialize<List<DashboardLayout>>(jsonExistente) ?? new List<DashboardLayout>();
+            }
+
+            // 3. Reemplazar si ya existe o añadir
+            listaMaster.RemoveAll(d => d.Nombre == nombreNuevo);
+            listaMaster.Add(nuevoDash);
+
+            // 4. Guardar archivo único
+            string jsonFinal = System.Text.Json.JsonSerializer.Serialize(listaMaster, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+            System.IO.File.WriteAllText(rutaMasterDashboards, jsonFinal);
+
+            txtConsola.AppendText($"\n[{DateTime.Now:HH:mm:ss}] [STORAGE] Dashboard {nombreNuevo} guardado.");
+            txtConsola.ScrollToEnd();
+
+            RefrescarListaDashboards();
+        }
+
+        // --- ELIMINAR DEL ARCHIVO MAESTRO ---
+        private void ConfirmarEliminarDashboardMaster(string nombre)
+        {
+            ConfirmDialog dialogo = new ConfirmDialog($"¿Deseas eliminar '{nombre}' de la lista maestra?");
+            dialogo.Owner = this;
+
+            if (dialogo.ShowDialog() == true)
+            {
+                if (System.IO.File.Exists(rutaMasterDashboards))
+                {
+                    string json = System.IO.File.ReadAllText(rutaMasterDashboards);
+                    var lista = System.Text.Json.JsonSerializer.Deserialize<List<DashboardLayout>>(json);
+
+                    lista.RemoveAll(d => d.Nombre == nombre);
+
+                    string nuevoJson = System.Text.Json.JsonSerializer.Serialize(lista, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+                    System.IO.File.WriteAllText(rutaMasterDashboards, nuevoJson);
+
+                    RefrescarListaDashboards();
+                    txtConsola.AppendText($"\n[{DateTime.Now:HH:mm:ss}] [STORAGE] Dashboard {nombre} removido.");
+                    txtConsola.ScrollToEnd();
+                }
+            }
+        }
+
+        // --- MÉTODOS AUXILIARES ---
+        private void CargarDesdeObjeto(DashboardLayout dash)
+        {
+            _viewModel.Widgets.Clear();
+            foreach (var c in dash.Widgets)
+            {
+                _viewModel.AgregarWidgetExterno(c);
+            }
+            txtConsola.AppendText($"\n[{DateTime.Now:HH:mm:ss}] [STORAGE] Dashboard '{dash.Nombre}' cargado.");
+        }
+
+        private string GetWidgetTypeString(WidgetBaseViewModel vm)
+        {
+            if (vm is WidgetSignalViewModel) return "Signal";
+            if (vm is WidgetGaugeViewModel) return "Gauge";
+            if (vm is WidgetBarViewModel) return "Bar";
+            if (vm is WidgetStatusViewModel) return "Status";
+            return "Label";
+        }
+
+        private Button CreateCircularDeleteButton()
+        {
+            Button btnDelete = new Button
+            {
+                Content = "✕",
+                Width = 26,
+                Height = 26,
+                Foreground = Brushes.White,
+                Background = new SolidColorBrush(Color.FromRgb(180, 50, 50)),
+                BorderThickness = new Thickness(0),
+                Margin = new Thickness(8, 0, 0, 0),
+                Cursor = Cursors.Hand,
+                FontSize = 10,
+                FontWeight = FontWeights.Bold,
+                RenderTransformOrigin = new Point(0.5, 0.5) // Importante para que escale desde el centro
+            };
+
+            // 1. Transformación para el efecto de clic
+            ScaleTransform scale = new ScaleTransform(1, 1);
+            btnDelete.RenderTransform = scale;
+
+            // 2. Plantilla (ControlTemplate)
+            ControlTemplate template = new ControlTemplate(typeof(Button));
+
+            // Elemento Border (Raíz)
+            FrameworkElementFactory borderFactory = new FrameworkElementFactory(typeof(Border));
+            borderFactory.Name = "CircleBorder";
+            borderFactory.SetValue(Border.BackgroundProperty, new TemplateBindingExtension(Button.BackgroundProperty));
+            borderFactory.SetValue(Border.CornerRadiusProperty, new CornerRadius(13));
+            borderFactory.SetValue(Border.BorderThicknessProperty, new Thickness(1.5));
+            borderFactory.SetValue(Border.BorderBrushProperty, Brushes.Transparent);
+            borderFactory.SetValue(Border.SnapsToDevicePixelsProperty, true);
+
+            // ContentPresenter (La X)
+            FrameworkElementFactory contentFactory = new FrameworkElementFactory(typeof(ContentPresenter));
+            contentFactory.SetValue(ContentPresenter.HorizontalAlignmentProperty, HorizontalAlignment.Center);
+            contentFactory.SetValue(ContentPresenter.VerticalAlignmentProperty, VerticalAlignment.Center);
+            borderFactory.AppendChild(contentFactory);
+
+            template.VisualTree = borderFactory;
+
+            // --- ANIMACIONES Y TRIGGERS ---
+
+            // A. TRIGGER: MOUSE OVER (Hover)
+            Trigger mouseOverTrigger = new Trigger { Property = UIElement.IsMouseOverProperty, Value = true };
+            mouseOverTrigger.Setters.Add(new Setter
+            {
+                TargetName = "CircleBorder",
+                Property = Border.BorderBrushProperty,
+                Value = Brushes.White // El borde se ilumina en blanco
+            });
+            template.Triggers.Add(mouseOverTrigger);
+
+            // B. TRIGGER: IS PRESSED (Efecto Clic con Storyboard)
+            // Cuando se presiona el botón, se hace más pequeño
+            Trigger pressedTrigger = new Trigger { Property = Button.IsPressedProperty, Value = true };
+
+            // Usamos Storyboard para asegurar compatibilidad y suavidad
+            Storyboard sbClick = new Storyboard();
+            DoubleAnimation animX = new DoubleAnimation(0.9, TimeSpan.FromMilliseconds(50));
+            DoubleAnimation animY = new DoubleAnimation(0.9, TimeSpan.FromMilliseconds(50));
+
+            Storyboard.SetTargetProperty(animX, new PropertyPath("RenderTransform.ScaleX"));
+            Storyboard.SetTargetProperty(animY, new PropertyPath("RenderTransform.ScaleY"));
+
+            sbClick.Children.Add(animX);
+            sbClick.Children.Add(animY);
+
+            // Eventos para disparar la animación
+            // Nota: En C# dinámico, los EventTriggers en plantillas son más complejos, 
+            // pero podemos usar Setters para el estado visual inmediato:
+            pressedTrigger.Setters.Add(new Setter { Property = UIElement.RenderTransformProperty, Value = new ScaleTransform(0.85, 0.85) });
+            template.Triggers.Add(pressedTrigger);
+
+            btnDelete.Template = template;
+
+            return btnDelete;
+        }
+
+        // --- LÓGICA ORIGINAL (SIN CAMBIOS) ---
 
         private void BtnConectar_Click(object sender, RoutedEventArgs e)
         {
             var toggle = sender as System.Windows.Controls.Primitives.ToggleButton;
             var vm = this.DataContext as MainViewModel;
-
-            // Obtenemos el Storyboard de alerta por si necesitamos detenerlo
             var sbAlerta = (Storyboard)this.FindResource("AlertaCriticaStoryboard");
 
             if (toggle.IsChecked == true)
             {
-                // --- MODO ONLINE ---
                 toggle.Content = "DESCONECTAR";
-
-                // LED Verde (Normal)
                 LedOnline.Fill = new SolidColorBrush(Color.FromRgb(0, 255, 0));
-
-                // Texto informativo ajustado a InfluxDB
                 txtEstadoConexion.Text = "TELEMETRÍA ACTIVA | INFLUXDB SERIES";
                 txtEstadoConexion.Foreground = (SolidColorBrush)Application.Current.Resources["OrangeAccent"];
-
                 if (vm != null) vm.IsConnected = true;
-
                 txtConsola.AppendText($"\n[{DateTime.Now:HH:mm:ss}] [SISTEMA] Sesión iniciada. Consultando series temporales.");
             }
             else
             {
-                // --- MODO OFFLINE ---
                 toggle.Content = "CONECTAR SISTEMA";
-
-                // Detenemos cualquier alerta roja parpadeante si existía
-                sbAlerta.Stop();
-
-                // LED Rojo fijo
+                if (sbAlerta != null) sbAlerta.Stop();
                 LedOnline.Fill = new SolidColorBrush(Colors.Red);
-
                 txtEstadoConexion.Text = "SISTEMA EN PAUSA | DESCONECTADO";
                 txtEstadoConexion.Foreground = new SolidColorBrush(Colors.Gray);
-
                 if (vm != null) vm.IsConnected = false;
-
                 txtConsola.AppendText($"\n[{DateTime.Now:HH:mm:ss}] [ADVERTENCIA] El usuario ha detenido el monitoreo.");
             }
-
             txtConsola.ScrollToEnd();
         }
 
@@ -83,17 +308,9 @@ namespace Sistema_de_Monitoreo_Industrial.Views
         {
             AddChartWindow dialog = new AddChartWindow();
             dialog.Owner = this;
-
-            if (dialog.ShowDialog() == true)
+            if (dialog.ShowDialog() == true && dialog.CreatedWidget != null)
             {
-                // Esto es un ChartWidgetConfig
-                var config = dialog.CreatedWidget;
-
-                if (config != null)
-                {
-                    // Ahora el VM procesa la configuración y crea el objeto visual
-                    _viewModel.AgregarWidgetExterno(config);
-                }
+                _viewModel.AgregarWidgetExterno(dialog.CreatedWidget);
             }
         }
 
@@ -101,12 +318,9 @@ namespace Sistema_de_Monitoreo_Industrial.Views
         {
             ConfigWindow win = new ConfigWindow();
             win.Owner = this;
-
             if (win.ShowDialog() == true)
             {
-                // Recargamos configuración para aplicar cambios de URL/Token inmediatamente
                 var config = ConfigService.Load();
-
                 txtConsola.AppendText($"\n[{DateTime.Now:HH:mm:ss}] [SISTEMA] Configuración actualizada.");
                 txtConsola.AppendText($"\n[{DateTime.Now:HH:mm:ss}] [DATABASE] Nueva IP Nodo: {config.InfluxUrl}");
                 txtConsola.ScrollToEnd();
@@ -119,4 +333,5 @@ namespace Sistema_de_Monitoreo_Industrial.Views
             txtConsola.Text = $"[{DateTime.Now:HH:mm:ss}] Consola reseteada por el operador.";
         }
     }
+
 }
