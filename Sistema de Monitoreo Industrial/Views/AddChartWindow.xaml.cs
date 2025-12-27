@@ -30,16 +30,6 @@ namespace Sistema_de_Monitoreo_Industrial.Views
             };
             CmbType.SelectedIndex = 0;
 
-            // 2. Cargamos Variables (Nombres amigables vs Nombres en InfluxDB)
-            CmbProp.ItemsSource = new List<object> {
-                new { Nombre = "Temperatura Motor", Tag = "Temperatura" },
-                new { Nombre = "Eficiencia OEE", Tag = "OEE" },
-                new { Nombre = "Latencia de Red", Tag = "Latencia" },
-                new { Nombre = "Vibración Eje X", Tag = "Vibracion" },
-                new { Nombre = "Conteo de Piezas", Tag = "ConteoPiezas" }
-            };
-            CmbProp.SelectedIndex = 0;
-
             // 3. CARGA REALMENTE DINÁMICA: Consultamos los robots existentes en la DB
             var robotsDetectados = await _dbService.ObtenerRobotsDisponibles();
             CmbRobot.ItemsSource = robotsDetectados;
