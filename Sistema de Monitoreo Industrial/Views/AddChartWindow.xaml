@@ -26,7 +26,7 @@
                 <Label Content="Tipo de Visualización" Foreground="Gray" FontSize="11" FontWeight="Bold"/>
                 <ComboBox x:Name="CmbType" Margin="0,5,0,15" Height="35"
                           DisplayMemberPath="Nombre" SelectedValuePath="Tag"
-                          SelectionChanged="CmbType_SelectionChanged" Style="{StaticResource ModernComboBox}"/>
+                          Style="{StaticResource ModernComboBox}"/>
 
                 <Label Content="Nodo / Robot de Origen" Foreground="Gray" FontSize="11" FontWeight="Bold"/>
                 <ComboBox x:Name="CmbRobot" Margin="0,5,0,20" Height="35"
@@ -34,7 +34,7 @@
 
                 <Label Content="Variable (Métrica InfluxDB)" Foreground="Gray" FontSize="11" FontWeight="Bold"/>
                 <ComboBox x:Name="CmbProp" Margin="0,5,0,15" Height="35"
-                          DisplayMemberPath="Nombre" SelectedValuePath="Tag" Style="{StaticResource ModernComboBox}"/>
+                          DisplayMemberPath="Nombre" SelectedValuePath="Tag" Style="{StaticResource ModernComboBox}"  SelectionChanged="CmbProp_SelectionChanged"/>
                 
             </StackPanel>
 

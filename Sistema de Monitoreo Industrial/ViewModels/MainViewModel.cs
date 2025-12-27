@@ -70,6 +70,9 @@ namespace Sistema_de_Monitoreo_Industrial.ViewModels
                 case "Status":
                     nuevoWidgetVm = new WidgetStatusViewModel(config.Title, config.RobotId, config.VariableTag);
                     break;
+                case "Label":
+                    nuevoWidgetVm = new LabelWidgetViewModel(config.Title, config.RobotId, config.VariableTag);
+                    break;
             }
 
             if (nuevoWidgetVm != null)

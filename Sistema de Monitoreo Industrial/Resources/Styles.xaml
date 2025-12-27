@@ -1,5 +1,6 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:vm="clr-namespace:Sistema_de_Monitoreo_Industrial.ViewModels.Widgets" xmlns:v="clr-namespace:Sistema_de_Monitoreo_Industrial.Views.Widgets">
 
     <SolidColorBrush x:Key="FondoOscuro" Color="#0F0F0F"/>
     <SolidColorBrush x:Key="PanelGris" Color="#1A1A1A"/>
@@ -434,5 +435,15 @@
                         To="Transparent" Duration="0:0:0.2" 
                         AutoReverse="True" RepeatBehavior="Forever"/>
     </Storyboard>
+
+    <Storyboard x:Key="OnTextChanged">
+        <DoubleAnimation Storyboard.TargetName="TxtDisplay" 
+                         Storyboard.TargetProperty="Opacity"
+                         From="0" To="1" Duration="0:0:0.5"/>
+    </Storyboard>
+
+    <DataTemplate DataType="{x:Type vm:LabelWidgetViewModel}">
+        <v:LabelWidgetView />
+    </DataTemplate>
 
 </ResourceDictionary>

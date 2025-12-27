@@ -1,6 +1,7 @@
 ﻿using Sistema_de_Monitoreo_Industrial.Models;
 using Sistema_de_Monitoreo_Industrial.Services;
 using System.Collections.Generic;
+using System.Linq; // No olvides el Linq para el .Select
 using System.Windows;
 using System.Windows.Controls;
 
@@ -9,8 +10,6 @@ namespace Sistema_de_Monitoreo_Industrial.Views
     public partial class AddChartWindow : Window
     {
         private DatabaseService _dbService = new DatabaseService();
-
-        // Propiedad que leerá la MainWindow tras el ShowDialog
         public ChartWidgetConfig CreatedWidget { get; private set; }
 
         public AddChartWindow()
@@ -21,16 +20,17 @@ namespace Sistema_de_Monitoreo_Industrial.Views
 
         private async void CargarListasDinamicas()
         {
-            // 1. Cargamos Tipos de Gráficos
+            // 1. Cargamos Tipos de Gráficos (Actualizado con "Label")
             CmbType.ItemsSource = new List<object> {
                 new { Nombre = "Señal Temporal (Líneas)", Tag = "Signal" },
                 new { Nombre = "Medidor Radial (Gauge)", Tag = "Gauge" },
+                new { Nombre = "Valor de Texto (Label)", Tag = "Label" }, // Nombre unificado
                 new { Nombre = "Producción Acumulada (Barras)", Tag = "Bar" },
                 new { Nombre = "Estado Operacional (Status)", Tag = "Status" }
             };
             CmbType.SelectedIndex = 0;
 
-            // 3. CARGA REALMENTE DINÁMICA: Consultamos los robots existentes en la DB
+            // 2. Cargamos Robots
             var robotsDetectados = await _dbService.ObtenerRobotsDisponibles();
             CmbRobot.ItemsSource = robotsDetectados;
 
@@ -43,16 +43,10 @@ namespace Sistema_de_Monitoreo_Industrial.Views
             if (CmbRobot.SelectedItem == null) return;
 
             string robotSeleccionado = CmbRobot.SelectedItem.ToString();
-
-            // Mostramos un estado de carga opcional
             CmbProp.IsEnabled = false;
 
-            // Obtenemos los campos reales de la DB para ese robot
             var campos = await _dbService.ObtenerCamposPorRobot(robotSeleccionado);
 
-            // Mapeamos a una lista de objetos para mantener la estructura Nombre/Tag
-            // Aquí puedes usar un diccionario para poner nombres bonitos si lo deseas, 
-            // pero por defecto usamos el nombre técnico de la DB.
             CmbProp.ItemsSource = campos.Select(c => new {
                 Nombre = FormatearNombreCampo(c),
                 Tag = c
@@ -62,7 +56,47 @@ namespace Sistema_de_Monitoreo_Industrial.Views
             CmbProp.IsEnabled = true;
         }
 
-        // Método simple para que "temperatura_motor" se vea como "Temperatura Motor"
+        // --- NUEVA LÓGICA DE BLOQUEO ---
+        private void CmbProp_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (CmbProp.SelectedItem == null) return;
+
+            // Obtenemos el Tag técnico (ej: "estado_motor")
+            string tag = (CmbProp.SelectedItem as dynamic).Tag.ToString().ToLower();
+
+            // CRITERIO INDUSTRIAL: Si el nombre contiene palabras clave de texto
+            bool esTexto = tag.Contains("estado") ||
+                           tag.Contains("modo") ||
+                           tag.Contains("operacion") ||
+                           tag.Contains("lote") ||
+                           tag.Contains("msg");
+
+            if (esTexto)
+            {
+                // Forzamos el tipo "Label" y bloqueamos el ComboBox de tipo
+                CmbType.SelectedValue = "Label";
+                // Nota: Si usas SelectedValue con objetos anónimos, asegúrate que 
+                // SelectedValuePath="Tag" esté puesto en el XAML del ComboBox
+
+                // Forma manual por si acaso:
+                foreach (var item in CmbType.Items)
+                {
+                    if ((item as dynamic).Tag == "Label")
+                    {
+                        CmbType.SelectedItem = item;
+                        break;
+                    }
+                }
+
+                CmbType.IsEnabled = false;
+            }
+            else
+            {
+                // Si es un número (temperatura, etc.), permitimos elegir Gauge o Signal
+                CmbType.IsEnabled = true;
+            }
+        }
+
         private string FormatearNombreCampo(string tecnico)
         {
             if (string.IsNullOrEmpty(tecnico)) return tecnico;
@@ -72,18 +106,13 @@ namespace Sistema_de_Monitoreo_Industrial.Views
 
         private void BtnCancelar_Click(object sender, RoutedEventArgs e) => this.Close();
 
-        private void CmbType_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e) { /* Lógica de UI */ }
-
         private void BtnAdd_Click(object sender, RoutedEventArgs e)
         {
-            // 1. Validaciones básicas
-            if (string.IsNullOrWhiteSpace(TxtTitle.Text) || CmbRobot.SelectedItem == null)
+            if (string.IsNullOrWhiteSpace(TxtTitle.Text) || CmbRobot.SelectedItem == null || CmbProp.SelectedItem == null)
             {
-                // Aquí podrías usar tu ConfirmDialog como aviso
                 return;
             }
 
-            // 2. Creamos el objeto con la selección del usuario
             CreatedWidget = new ChartWidgetConfig
             {
                 Title = TxtTitle.Text,
@@ -92,7 +121,6 @@ namespace Sistema_de_Monitoreo_Industrial.Views
                 RobotId = CmbRobot.SelectedItem.ToString()
             };
 
-            // 3. Cerramos con éxito
             this.DialogResult = true;
             this.Close();
         }
