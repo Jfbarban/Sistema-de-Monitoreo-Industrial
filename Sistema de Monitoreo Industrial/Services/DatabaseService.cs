@@ -54,18 +54,14 @@ namespace Sistema_de_Monitoreo_Industrial.Services
                             NodoOrigen = record.GetValueByKey("id_robot")?.ToString() ?? "N/A"
                         };
 
-                        // Recorremos todos los valores del registro
                         foreach (var entry in record.Values)
                         {
-                            // Ignoramos columnas que son metadatos (tiempo, tabla, etc)
+                            // Saltamos metadatos del motor de Influx
                             if (entry.Key.StartsWith("_") || entry.Key == "id_robot" || entry.Key == "result" || entry.Key == "table")
                                 continue;
 
-                            if (entry.Value != null && double.TryParse(entry.Value.ToString(), out double val))
-                            {
-                                // Guardamos la métrica con el nombre exacto que viene de la DB
-                                dato.Metricas[entry.Key] = val;
-                            }
+                            // Guardamos el objeto original (puede ser double o string)
+                            dato.Metricas[entry.Key] = entry.Value;
                         }
                         lista.Add(dato);
                     }

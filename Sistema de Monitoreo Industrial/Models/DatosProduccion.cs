@@ -7,7 +7,7 @@ namespace Sistema_de_Monitoreo_Industrial.Models
         public DateTime Timestamp { get; set; }
         public string NodoOrigen { get; set; }
 
-        // Aquí guardaremos CUALQUIER campo que venga de InfluxDB
-        public Dictionary<string, double> Metricas { get; set; } = new Dictionary<string, double>();
+        // Ahora aceptamos 'object', puede ser double, string, bool, etc.
+        public Dictionary<string, object> Metricas { get; set; } = new Dictionary<string, object>();
     }
 }
