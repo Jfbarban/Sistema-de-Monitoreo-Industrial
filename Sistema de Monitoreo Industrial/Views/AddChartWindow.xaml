@@ -1,0 +1,39 @@
+﻿<Window x:Class="Sistema_de_Monitoreo_Industrial.Views.AddChartWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Configurar Widget" Height="450" Width="380" 
+        Background="#222" WindowStartupLocation="CenterOwner">
+    <Border Padding="20">
+        <StackPanel>
+            <TextBlock Text="NUEVA GRÁFICA" Foreground="#00E5FF" FontSize="16" FontWeight="Bold" Margin="0,0,0,15"/>
+
+            <Label Content="Título del Widget" Foreground="White"/>
+            <TextBox x:Name="TxtTitle" Text="Monitoreo" Margin="0,0,0,10" Background="#333" Foreground="White" BorderThickness="0" Padding="5"/>
+
+            <Label Content="Tipo de Gráfico" Foreground="White"/>
+            <ComboBox x:Name="CmbType" Margin="0,0,0,10" SelectionChanged="CmbType_SelectionChanged">
+                <ComboBoxItem Content="Señal Temporal (Líneas)" Tag="Signal" IsSelected="True"/>
+                <ComboBoxItem Content="Medidor Radial (Gauge)" Tag="Gauge"/>
+                <ComboBoxItem Content="Producción Acumulada (Barras)" Tag="Bar"/>
+                <ComboBoxItem Content="Estado Operacional (Status)" Tag="Status"/>
+            </ComboBox>
+
+            <Label Content="Variable" Foreground="White"/>
+            <ComboBox x:Name="CmbProp" Margin="0,0,0,10">
+                <ComboBoxItem Content="Temperatura" Tag="Temperatura" IsSelected="True"/>
+                <ComboBoxItem Content="OEE" Tag="OEE"/>
+                <ComboBoxItem Content="Latencia" Tag="Latencia"/>
+                <ComboBoxItem Content="Vibración" Tag="Vibracion"/>
+                <ComboBoxItem Content="Producción" Tag="ConteoPiezas"/>
+            </ComboBox>
+
+            <Label Content="Robot" Foreground="White"/>
+            <ComboBox x:Name="CmbRobot" Margin="0,0,0,20">
+                <ComboBoxItem Content="Envasado-01" Tag="Envasado-01" IsSelected="True"/>
+                <ComboBoxItem Content="Etiquetado-02" Tag="Etiquetado-02"/>
+            </ComboBox>
+
+            <Button Content="AÑADIR DASHBOARD" Click="BtnAdd_Click" Height="40" Background="#FF6D00" Foreground="White" FontWeight="Bold"/>
+        </StackPanel>
+    </Border>
+</Window>

@@ -1,0 +1,68 @@
+﻿<Window x:Class="Sistema_de_Monitoreo_Industrial.Views.ConfigWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Configuración del Sistema | Vertex-IoT" 
+        Height="564" Width="400"
+        Background="{StaticResource FondoOscuro}"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        WindowStyle="None"
+        AllowsTransparency="True">
+
+    <Border BorderBrush="#333" BorderThickness="1" CornerRadius="15" Background="{StaticResource FondoOscuro}">
+        <Grid Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <StackPanel Grid.Row="0" Margin="0,0,0,20">
+                <TextBlock Text="CONFIGURACIÓN GENERAL" Foreground="White" FontSize="16" FontWeight="Black"/>
+                <Rectangle Height="2" Fill="{StaticResource OrangeAccent}" HorizontalAlignment="Left" Width="50" Margin="0,5,0,0"/>
+            </StackPanel>
+
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <TextBlock Text="CONEXIÓN INFLUXDB (TIME-SERIES)" Foreground="{StaticResource OrangeAccent}" FontSize="10" FontWeight="Bold" Margin="0,10,0,10"/>
+
+                    <TextBlock Text="Server URL" Foreground="Gray" FontSize="11" Margin="0,5"/>
+                    <TextBox x:Name="txtUrl" Style="{StaticResource ModernTextBoxStyle}"/>
+
+                    <TextBlock Text="Organización" Foreground="Gray" FontSize="11" Margin="0,15,0,5"/>
+                    <TextBox x:Name="txtOrg" Style="{StaticResource ModernTextBoxStyle}"/>
+
+                    <TextBlock Text="Bucket" Foreground="Gray" FontSize="11" Margin="0,15,0,5"/>
+                    <TextBox x:Name="txtBucket" Style="{StaticResource ModernTextBoxStyle}"/>
+
+                    <TextBlock Text="Access Token" Foreground="Gray" FontSize="11" Margin="0,15,0,5"/>
+                    <TextBox x:Name="txtToken" Height="60" TextWrapping="Wrap" AcceptsReturn="True" Style="{StaticResource ModernTextBoxStyle}"/>
+
+                    <Button x:Name="btnTest" Content="PROBAR CONEXIÓN" Margin="0,20,0,0" Click="BtnTest_Click" Style="{StaticResource BtnDark}"/>
+                </StackPanel>
+            </ScrollViewer>
+
+            <Grid Grid.Row="2" Margin="0,20,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <Button x:Name="btnCancelar" 
+            Grid.Column="0"
+            Content="CANCELAR" 
+            Width="100" Height="35" 
+            Style="{StaticResource BtnDark}" 
+            Click="BtnCancelar_Click"/>
+
+                <Button x:Name="btnGuardar" 
+            Grid.Column="2"
+            Content="GUARDAR" 
+            Width="120" Height="35" 
+            Style="{StaticResource BtnPlay}" 
+            Click="BtnGuardar_Click"/>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

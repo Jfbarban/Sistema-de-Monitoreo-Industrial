@@ -1,0 +1,8 @@
+﻿<UserControl x:Class="Sistema_de_Monitoreo_Industrial.Views.Widgets.SignalWidgetView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:scott="clr-namespace:ScottPlot.WPF;assembly=ScottPlot.WPF">
+    <Grid>
+        <scott:WpfPlot Name="MyPlot"/>
+    </Grid>
+</UserControl>
