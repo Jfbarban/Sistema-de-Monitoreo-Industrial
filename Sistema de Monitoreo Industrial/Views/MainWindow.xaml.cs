@@ -38,8 +38,8 @@ namespace Sistema_de_Monitoreo_Industrial.Views
             txtConsola.AppendText($"\n[{DateTime.Now:HH:mm:ss}] [DATABASE] Bucket activo: {config.InfluxBucket}");
             txtConsola.AppendText($"\n[{DateTime.Now:HH:mm:ss}] Sistema listo. Estado actual: OFFLINE");
 
-            // NUEVO: Cargar lista de dashboards en el panel lateral al arrancar
-            RefrescarListaDashboards();
+            btnGuardarLayout.IsEnabled = false;
+            panelDashboardsSaved.Children.Clear();
 
             txtConsola.ScrollToEnd();
         }        
@@ -66,7 +66,7 @@ namespace Sistema_de_Monitoreo_Industrial.Views
         }
 
         // --- REFRESCAR PANEL (Desde un único archivo) ---
-        private void RefrescarListaDashboards()
+        public void RefrescarListaDashboards()
         {
             try
             {
@@ -290,6 +290,10 @@ namespace Sistema_de_Monitoreo_Industrial.Views
                 txtEstadoConexion.Foreground = (SolidColorBrush)Application.Current.Resources["OrangeAccent"];
                 if (vm != null) vm.IsConnected = true;
                 txtConsola.AppendText($"\n[{DateTime.Now:HH:mm:ss}] [SISTEMA] Sesión iniciada. Consultando series temporales.");
+
+                btnGuardarLayout.IsEnabled = true;
+                RefrescarListaDashboards();
+                txtConsola.AppendText($"\n[{DateTime.Now:HH:mm:ss}] [SISTEMA] Dashboard cargado.");
             }
             else
             {
@@ -299,6 +303,8 @@ namespace Sistema_de_Monitoreo_Industrial.Views
                 txtEstadoConexion.Text = "SISTEMA EN PAUSA | DESCONECTADO";
                 txtEstadoConexion.Foreground = new SolidColorBrush(Colors.Gray);
                 if (vm != null) vm.IsConnected = false;
+                btnGuardarLayout.IsEnabled = false;
+                panelDashboardsSaved.Children.Clear();
                 txtConsola.AppendText($"\n[{DateTime.Now:HH:mm:ss}] [ADVERTENCIA] El usuario ha detenido el monitoreo.");
             }
             txtConsola.ScrollToEnd();

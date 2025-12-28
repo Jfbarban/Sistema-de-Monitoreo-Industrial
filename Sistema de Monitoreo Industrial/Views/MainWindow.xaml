@@ -109,7 +109,7 @@
                 </Grid.RowDefinitions>
 
                 <StackPanel Grid.Row="0">
-                    <Button Content="GUARDAR DASHBOARD" 
+                    <Button x:Name="btnGuardarLayout" Content="GUARDAR DASHBOARD" 
                     Style="{StaticResource BtnSave}" 
                     Margin="0,0,0,15" 
                     Height="35"

@@ -1,5 +1,6 @@
 ﻿using InfluxDB.Client;
 using Sistema_de_Monitoreo_Industrial.Models;
+using Sistema_de_Monitoreo_Industrial.Views;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,6 +13,7 @@ namespace Sistema_de_Monitoreo_Industrial.Services
 {
     public class DatabaseService
     {
+        MainWindow mainWin = Application.Current.MainWindow as Sistema_de_Monitoreo_Industrial.Views.MainWindow;
         private readonly AppSettings _settings;
         public int _reintentosFallidos = 0;
         private const int MaxReintentos = 6;
@@ -70,6 +72,7 @@ namespace Sistema_de_Monitoreo_Industrial.Services
                         }
                         lista.Add(dato);
                     }
+                    
                 }
             }
             catch (Exception ex)
@@ -145,7 +148,7 @@ namespace Sistema_de_Monitoreo_Industrial.Services
         {
             Application.Current.Dispatcher.Invoke(() =>
             {
-                var mainWin = Application.Current.MainWindow as Sistema_de_Monitoreo_Industrial.Views.MainWindow;
+                
                 if (mainWin == null) return;
 
                 // 1. Escribir en consola
