@@ -37,52 +37,58 @@ namespace Sistema_de_Monitoreo_Industrial.Views
 
         private void CargarHistorial(bool esAutomatico = false)
         {
-            string ruta = "alarm_history.json";
-            if (System.IO.File.Exists(ruta))
+            // Dentro de CargarHistorial()
+            lock (LogMaintenanceService.ArchivoLock)
             {
-                try
+
+                string ruta = "alarm_history.json";
+
+                if (System.IO.File.Exists(ruta))
                 {
-                    // Optimización: Solo procesar si el archivo realmente cambió de tamaño o fecha
-                    var info = new FileInfo(ruta);
-                    string hashActual = $"{info.Length}_{info.LastWriteTime}";
-                    if (esAutomatico && hashActual == _ultimoHashArchivo) return;
-                    _ultimoHashArchivo = hashActual;
-
-                    string json = System.IO.File.ReadAllText(ruta);
-                    var lista = System.Text.Json.JsonSerializer.Deserialize<List<AlarmLog>>(json);
-
-                    if (lista != null)
+                    try
                     {
-                        var listaOrdenada = lista.OrderByDescending(x => x.Timestamp).ToList();
+                        // Optimización: Solo procesar si el archivo realmente cambió de tamaño o fecha
+                        var info = new FileInfo(ruta);
+                        string hashActual = $"{info.Length}_{info.LastWriteTime}";
+                        if (esAutomatico && hashActual == _ultimoHashArchivo) return;
+                        _ultimoHashArchivo = hashActual;
 
-                        // Si es la primera vez, creamos la View
-                        if (_historyView == null)
+                        string json = System.IO.File.ReadAllText(ruta);
+                        var lista = System.Text.Json.JsonSerializer.Deserialize<List<AlarmLog>>(json);
+
+                        if (lista != null)
                         {
-                            _historyView = CollectionViewSource.GetDefaultView(listaOrdenada);
-                            _historyView.Filter = (obj) =>
+                            var listaOrdenada = lista.OrderByDescending(x => x.Timestamp).ToList();
+
+                            // Si es la primera vez, creamos la View
+                            if (_historyView == null)
                             {
-                                if (string.IsNullOrWhiteSpace(txtSearch.Text)) return true;
-                                var log = obj as AlarmLog;
-                                string query = txtSearch.Text.ToLower();
-                                return log.RobotId.ToLower().Contains(query) ||
-                                       log.Variable.ToLower().Contains(query);
-                            };
-                            dgHistory.ItemsSource = _historyView;
-                        }
-                        else
-                        {
-                            // Si ya existe, actualizamos la fuente de datos
-                            // Esto mantiene el filtro actual del usuario
-                            dgHistory.ItemsSource = listaOrdenada;
-                            _historyView = CollectionViewSource.GetDefaultView(listaOrdenada);
-                            _historyView.Refresh();
+                                _historyView = CollectionViewSource.GetDefaultView(listaOrdenada);
+                                _historyView.Filter = (obj) =>
+                                {
+                                    if (string.IsNullOrWhiteSpace(txtSearch.Text)) return true;
+                                    var log = obj as AlarmLog;
+                                    string query = txtSearch.Text.ToLower();
+                                    return log.RobotId.ToLower().Contains(query) ||
+                                           log.Variable.ToLower().Contains(query);
+                                };
+                                dgHistory.ItemsSource = _historyView;
+                            }
+                            else
+                            {
+                                // Si ya existe, actualizamos la fuente de datos
+                                // Esto mantiene el filtro actual del usuario
+                                dgHistory.ItemsSource = listaOrdenada;
+                                _historyView = CollectionViewSource.GetDefaultView(listaOrdenada);
+                                _historyView.Refresh();
+                            }
                         }
                     }
-                }
-                catch (Exception ex)
-                {
-                    // En refresco automático no mostramos error para no interrumpir al usuario
-                    if (!esAutomatico) MessageBox.Show("Error: " + ex.Message);
+                    catch (Exception ex)
+                    {
+                        // En refresco automático no mostramos error para no interrumpir al usuario
+                        if (!esAutomatico) MessageBox.Show("Error: " + ex.Message);
+                    }
                 }
             }
         }
