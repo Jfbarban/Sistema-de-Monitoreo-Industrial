@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
@@ -16,7 +17,6 @@ namespace Sistema_de_Monitoreo_Industrial.Views
     public partial class MainWindow : Window
     {
         private readonly MainViewModel _viewModel;
-        private DashboardService _dashboardService = new DashboardService();
 
         private string rutaMasterDashboards = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "dashboards_master.json");
 
@@ -33,37 +33,17 @@ namespace Sistema_de_Monitoreo_Industrial.Views
             var config = ConfigService.Load();
 
             // 3. Log de inicio
-            txtConsola.AppendText($"\n[{DateTime.Now:HH:mm:ss}] [SISTEMA] Configuración Vertex-IoT cargada.");
-            txtConsola.AppendText($"\n[{DateTime.Now:HH:mm:ss}] [DATABASE] Conectado a Nodo: {config.InfluxUrl}");
-            txtConsola.AppendText($"\n[{DateTime.Now:HH:mm:ss}] [DATABASE] Bucket activo: {config.InfluxBucket}");
-            txtConsola.AppendText($"\n[{DateTime.Now:HH:mm:ss}] Sistema listo. Estado actual: OFFLINE");
+            EscribirEnConsola($"[SISTEMA] Nodo central iniciado. Esperando despliegue de telemetría...");
+            EscribirEnConsola($"[SISTEMA] Configuración Vertex-IoT cargada.");
+            EscribirEnConsola($"[DATABASE] Conectado a Nodo: {config.InfluxUrl}");
+            EscribirEnConsola($"[DATABASE] Bucket activo: {config.InfluxBucket}");
+            EscribirEnConsola($"Sistema listo. Estado actual: OFFLINE");
 
             btnGuardarLayout.IsEnabled = false;
             panelDashboardsSaved.Children.Clear();
 
             txtConsola.ScrollToEnd();
-        }        
-
-        private void BtnCargarDashboard_Click(object sender, RoutedEventArgs e)
-        {
-            var btn = sender as Button;
-            string nombre = btn?.Tag as string;
-
-            if (!string.IsNullOrEmpty(nombre))
-            {
-                var configs = _dashboardService.Cargar(nombre);
-                if (configs != null)
-                {
-                    _viewModel.Widgets.Clear();
-                    foreach (var c in configs)
-                    {
-                        _viewModel.AgregarWidgetExterno(c);
-                    }
-                    txtConsola.AppendText($"\n[{DateTime.Now:HH:mm:ss}] [STORAGE] Dashboard '{nombre}' cargado.");
-                    txtConsola.ScrollToEnd();
-                }
-            }
-        }
+        } 
 
         // --- REFRESCAR PANEL (Desde un único archivo) ---
         public void RefrescarListaDashboards()
@@ -124,7 +104,8 @@ namespace Sistema_de_Monitoreo_Industrial.Views
                     Title = widgetVM.Title,
                     ChartType = GetWidgetTypeString(widgetVM), // Método auxiliar para identificar el tipo
                     RobotId = widgetVM.RobotId,
-                    VariableTag = widgetVM.VariableTag
+                    VariableTag = widgetVM.VariableTag,
+                    AlertThreshold = widgetVM.Threshold
                 });
             }
 
@@ -144,7 +125,7 @@ namespace Sistema_de_Monitoreo_Industrial.Views
             string jsonFinal = System.Text.Json.JsonSerializer.Serialize(listaMaster, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
             System.IO.File.WriteAllText(rutaMasterDashboards, jsonFinal);
 
-            txtConsola.AppendText($"\n[{DateTime.Now:HH:mm:ss}] [STORAGE] Dashboard {nombreNuevo} guardado.");
+            EscribirEnConsola($"[STORAGE] Dashboard {nombreNuevo} guardado.");
             txtConsola.ScrollToEnd();
 
             RefrescarListaDashboards();
@@ -169,7 +150,7 @@ namespace Sistema_de_Monitoreo_Industrial.Views
                     System.IO.File.WriteAllText(rutaMasterDashboards, nuevoJson);
 
                     RefrescarListaDashboards();
-                    txtConsola.AppendText($"\n[{DateTime.Now:HH:mm:ss}] [STORAGE] Dashboard {nombre} removido.");
+                    EscribirEnConsola($"[STORAGE] Dashboard {nombre} removido.");
                     txtConsola.ScrollToEnd();
                 }
             }
@@ -183,7 +164,7 @@ namespace Sistema_de_Monitoreo_Industrial.Views
             {
                 _viewModel.AgregarWidgetExterno(c);
             }
-            txtConsola.AppendText($"\n[{DateTime.Now:HH:mm:ss}] [STORAGE] Dashboard '{dash.Nombre}' cargado.");
+            EscribirEnConsola($"[STORAGE] Dashboard '{dash.Nombre}' cargado.");
         }
 
         private string GetWidgetTypeString(WidgetBaseViewModel vm)
@@ -288,12 +269,13 @@ namespace Sistema_de_Monitoreo_Industrial.Views
                 LedOnline.Fill = new SolidColorBrush(Color.FromRgb(0, 255, 0));
                 txtEstadoConexion.Text = "TELEMETRÍA ACTIVA | INFLUXDB SERIES";
                 txtEstadoConexion.Foreground = (SolidColorBrush)Application.Current.Resources["OrangeAccent"];
-                if (vm != null) vm.IsConnected = true;
-                txtConsola.AppendText($"\n[{DateTime.Now:HH:mm:ss}] [SISTEMA] Sesión iniciada. Consultando series temporales.");
+                if (vm != null) { vm.IniciarConexion();  }
+                ;
+                EscribirEnConsola($"[SISTEMA] Sesión iniciada. Consultando series temporales.");
 
                 btnGuardarLayout.IsEnabled = true;
                 RefrescarListaDashboards();
-                txtConsola.AppendText($"\n[{DateTime.Now:HH:mm:ss}] [SISTEMA] Dashboard cargado.");
+                EscribirEnConsola($"[SISTEMA] Dashboard cargado.");
             }
             else
             {
@@ -302,12 +284,18 @@ namespace Sistema_de_Monitoreo_Industrial.Views
                 LedOnline.Fill = new SolidColorBrush(Colors.Red);
                 txtEstadoConexion.Text = "SISTEMA EN PAUSA | DESCONECTADO";
                 txtEstadoConexion.Foreground = new SolidColorBrush(Colors.Gray);
-                if (vm != null) vm.IsConnected = false;
+                if (vm != null) { vm.DetenerConexion(); };
                 btnGuardarLayout.IsEnabled = false;
                 panelDashboardsSaved.Children.Clear();
-                txtConsola.AppendText($"\n[{DateTime.Now:HH:mm:ss}] [ADVERTENCIA] El usuario ha detenido el monitoreo.");
+                EscribirEnConsola($"[ADVERTENCIA] El usuario ha detenido el monitoreo.");
             }
             txtConsola.ScrollToEnd();
+        }
+
+        private void BtnVerHistorial_Click(object sender, RoutedEventArgs e)
+        {
+            HistoryWindow win = new HistoryWindow { Owner = this };
+            win.ShowDialog();
         }
 
         private void BtnAdd_Click(object sender, RoutedEventArgs e)
@@ -327,16 +315,49 @@ namespace Sistema_de_Monitoreo_Industrial.Views
             if (win.ShowDialog() == true)
             {
                 var config = ConfigService.Load();
-                txtConsola.AppendText($"\n[{DateTime.Now:HH:mm:ss}] [SISTEMA] Configuración actualizada.");
-                txtConsola.AppendText($"\n[{DateTime.Now:HH:mm:ss}] [DATABASE] Nueva IP Nodo: {config.InfluxUrl}");
+                EscribirEnConsola($"[SISTEMA] Configuración actualizada.");
+                EscribirEnConsola($"[DATABASE] Nueva IP Nodo: {config.InfluxUrl}");
                 txtConsola.ScrollToEnd();
             }
         }
 
+        public void EscribirEnConsola(string mensaje)
+        {
+            // Usamos Dispatcher por si la llamada viene desde el hilo del correo (async)
+            Dispatcher.Invoke(() => {
+                // 1. Color por defecto (Verde Matrix)
+                Brush colorLinea = (Brush)new BrushConverter().ConvertFrom("#00FF00");
+
+                // 2. Lógica de colores según el contenido
+                if (mensaje.Contains("[ERROR]"))
+                    colorLinea = Brushes.Tomato; // Rojo suave para que se lea bien en negro
+                else if (mensaje.Contains("[ALERTA]"))
+                    colorLinea = Brushes.Yellow;
+                else if (mensaje.Contains("[INFO]"))
+                    colorLinea = Brushes.Cyan;
+                else if (mensaje.Contains("[SUCCESS]"))
+                    colorLinea = Brushes.LimeGreen;
+
+                // 3. Crear la nueva línea
+                Run run = new Run($"[{DateTime.Now:HH:mm:ss}] {mensaje}\n")
+                {
+                    Foreground = colorLinea
+                };
+
+                // 4. Añadir al párrafo y auto-scroll
+                logParagraph.Inlines.Add(run);
+                txtConsola.ScrollToEnd();
+            });
+        }
+
         private void BtnLimpiarConsola_Click(object sender, RoutedEventArgs e)
         {
-            txtConsola.Clear();
-            txtConsola.Text = $"[{DateTime.Now:HH:mm:ss}] Consola reseteada por el operador.";
+            // 1. Limpiamos todas las líneas del párrafo
+            logParagraph.Inlines.Clear();
+
+            // 2. Usamos tu nuevo método para escribir el mensaje de reseteo
+            // Así mantienes el formato de hora y el color verde por defecto automáticamente
+            EscribirEnConsola("[SISTEMA] Consola reseteada por el operador.");
         }
     }
 

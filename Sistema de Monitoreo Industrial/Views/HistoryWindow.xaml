@@ -1,0 +1,83 @@
+﻿<Window x:Class="Sistema_de_Monitoreo_Industrial.Views.HistoryWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="AUDITORÍA DE EVENTOS CRÍTICOS" Height="450" Width="698"
+        Background="{StaticResource FondoOscuro}" WindowStartupLocation="CenterOwner">
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+
+        <Style x:Key="IndustrialDataGrid" TargetType="DataGrid">
+            <Setter Property="Background" Value="#0F0F0F"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="RowBackground" Value="#1A1A1A"/>
+            <Setter Property="AlternatingRowBackground" Value="#121212"/>
+            <Setter Property="GridLinesVisibility" Value="Vertical"/>
+            <Setter Property="VerticalGridLinesBrush" Value="#333"/>
+            <Setter Property="HorizontalGridLinesBrush" Value="Transparent"/>
+            <Setter Property="CanUserResizeColumns" Value="True"/>
+            <Setter Property="IsReadOnly" Value="True"/>
+            <Setter Property="AutoGenerateColumns" Value="False"/>
+            <Setter Property="HeadersVisibility" Value="Column"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,20">
+            <Border Width="4" Height="25" Background="{StaticResource CianAuditoria}" Margin="0,0,10,0"/>
+            <TextBlock Text="HISTORIAL LOGS DE SEGURIDAD" FontSize="18" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
+        </StackPanel>
+
+        <Grid Grid.Row="1" Margin="0,0,0,15">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <Border Background="#1A1A1A" BorderBrush="#444" BorderThickness="1" CornerRadius="15" Padding="15,5">
+                <Grid>
+                    <TextBlock Text="Buscar por nodo o variable..." Foreground="#555" IsHitTestVisible="False" 
+                               VerticalAlignment="Center" FontSize="13"
+                               Visibility="{Binding Text.IsEmpty, ElementName=txtSearch, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                    <TextBox x:Name="txtSearch" Background="Transparent" Foreground="White" BorderThickness="0" 
+                             VerticalAlignment="Center" FontSize="13" CaretBrush="{StaticResource OrangeAccent}"/>
+                    <Button Grid.Column="1" Content="X" Background="Transparent" 
+                        Style="{StaticResource BtnConfigStyle}" HorizontalAlignment="Right" Foreground="{StaticResource TextDim}" 
+                        FontSize="15" Margin="0,0,0,0" Cursor="Hand" Opacity="0.8" Click="btnClear_Click"/>
+                </Grid>
+            </Border>
+
+            <Button Grid.Column="1" Content="🔍" Background="Transparent" 
+            Style="{StaticResource BtnConfigStyle}" Foreground="{StaticResource TextDim}" 
+            FontSize="25" Margin="0,0,15,0" Cursor="Hand" Opacity="0.8" Click="btnSearch_Click"/>
+        </Grid>
+
+        <Border Grid.Row="2" Style="{StaticResource CardStyle}" CornerRadius="0" Padding="2">
+            <DataGrid x:Name="dgHistory" Style="{StaticResource IndustrialDataGrid}">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="FECHA/HORA" Binding="{Binding Timestamp, StringFormat={}{0:dd/MM HH:mm:ss}}" Width="140"/>
+                    <DataGridTextColumn Header="NODO" Binding="{Binding RobotId}" Width="80"/>
+                    <DataGridTextColumn Header="VARIABLE" Binding="{Binding Variable}" Width="100"/>
+                    <DataGridTextColumn Header="VALOR" Binding="{Binding Valor}" Width="80"/>
+                    <DataGridTextColumn Header="ESTADO" Binding="{Binding Mensaje}" Width="*"/>
+                    <DataGridTemplateColumn Header="TIPO" Width="80">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Border Padding="5,2" CornerRadius="4" Background="{Binding EsInicio, Converter={StaticResource BoolToColorConverter}}">
+                                    <TextBlock Text="{Binding EsInicio, Converter={StaticResource BoolToStatusConverter}}" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" FontSize="10"/>
+                                </Border>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+    </Grid>
+</Window>

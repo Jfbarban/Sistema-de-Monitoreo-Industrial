@@ -6,19 +6,70 @@
         xmlns:vm="clr-namespace:Sistema_de_Monitoreo_Industrial.ViewModels.Widgets"
         xmlns:views="clr-namespace:Sistema_de_Monitoreo_Industrial.Views.Widgets"
         mc:Ignorable="d"
-        Title="Vertex-IoT | Control Panel" Height="800" Width="1400" 
+        Title="Vertex-IoT | Control Panel" Height="533" Width="1264" MinHeight="533" MinWidth="1264" 
         Background="{StaticResource FondoOscuro}"
         WindowStartupLocation="CenterScreen">
 
     <Window.Resources>
+
+        <Style x:Key="SilenceButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#CCFF0000"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Visibility" Value="Collapsed"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsAlerting}" Value="True">
+                    <Setter Property="Visibility" Value="Visible"/>
+                </DataTrigger>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="Red"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
         <Style x:Key="WidgetCardStyle" TargetType="Border" BasedOn="{StaticResource CardStyle}">
             <Setter Property="Margin" Value="10"/>
             <Setter Property="Padding" Value="0"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="2"/>
             <Setter Property="Effect">
                 <Setter.Value>
                     <DropShadowEffect BlurRadius="15" Direction="270" RenderingBias="Quality" ShadowDepth="2" Opacity="0.3"/>
                 </Setter.Value>
             </Setter>
+
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsAlerting}" Value="True">
+                    <DataTrigger.EnterActions>
+                        <BeginStoryboard x:Name="BlinkAnim">
+                            <Storyboard>
+                                <ColorAnimation Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)"
+                                                From="Red" To="Transparent" 
+                                                Duration="0:0:0.5" 
+                                                AutoReverse="True" 
+                                                RepeatBehavior="Forever"/>
+                                <ThicknessAnimation Storyboard.TargetProperty="BorderThickness"
+                                                    To="4" Duration="0:0:0.0"/>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </DataTrigger.EnterActions>
+                    <DataTrigger.ExitActions>
+                        <StopStoryboard BeginStoryboardName="BlinkAnim"/>
+                    </DataTrigger.ExitActions>
+                </DataTrigger>
+            </Style.Triggers>
         </Style>
 
         <Style x:Key="VerticalSplitterStyle" TargetType="GridSplitter">
@@ -33,6 +84,18 @@
             </Style.Triggers>
         </Style>
 
+        <Style x:Key="ColumnSplitterStyle" TargetType="GridSplitter">
+            <Setter Property="Background" Value="#252525"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment" Value="Stretch"/>
+            <Setter Property="Width" Value="5"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{StaticResource OrangeAccent}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
         <DataTemplate DataType="{x:Type vm:WidgetGaugeViewModel}">
             <Border Style="{StaticResource WidgetCardStyle}" Width="260" Height="280">
                 <Grid>
@@ -40,6 +103,7 @@
                         <RowDefinition Height="40"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
+
                     <Border Background="#252525" CornerRadius="12,12,0,0">
                         <DockPanel Margin="15,0">
                             <TextBlock Text="{Binding Title}" Foreground="White" VerticalAlignment="Center" FontWeight="Bold" FontSize="11"/>
@@ -47,7 +111,13 @@
                                     Command="{Binding RemoveCommand}" DockPanel.Dock="Right" Width="30" Height="25" Foreground="#FF4444"/>
                         </DockPanel>
                     </Border>
+
                     <views:GaugeWidgetView Grid.Row="1" Margin="10"/>
+
+                    <Button Grid.Row="1" Content="SILENCIAR ALARMA" 
+                            Command="{Binding SilenceCommand}"
+                            Style="{StaticResource SilenceButtonStyle}"
+                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Grid>
             </Border>
         </DataTemplate>
@@ -59,6 +129,7 @@
                         <RowDefinition Height="40"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
+
                     <Border Background="#252525" CornerRadius="12,12,0,0">
                         <DockPanel Margin="15,0">
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -69,7 +140,14 @@
                                     Command="{Binding RemoveCommand}" DockPanel.Dock="Right" Width="30" Height="25" Foreground="#FF4444"/>
                         </DockPanel>
                     </Border>
+
                     <views:SignalWidgetView Grid.Row="1" Margin="10"/>
+
+                    <Button Grid.Row="1" Content="⚠️ SILENCIAR ALARMA" 
+                            Command="{Binding SilenceCommand}"
+                            Style="{StaticResource SilenceButtonStyle}"
+                            HorizontalAlignment="Right" VerticalAlignment="Top"
+                            Margin="0,10,20,0"/>
                 </Grid>
             </Border>
         </DataTemplate>
@@ -81,6 +159,7 @@
                         <RowDefinition Height="40"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
+
                     <Border Background="#252525" CornerRadius="12,12,0,0">
                         <DockPanel Margin="15,0">
                             <TextBlock Text="{Binding Title}" Foreground="White" VerticalAlignment="Center" FontWeight="Bold" FontSize="11"/>
@@ -88,7 +167,14 @@
                                     Command="{Binding RemoveCommand}" DockPanel.Dock="Right" Width="30" Height="25" Foreground="#FF4444"/>
                         </DockPanel>
                     </Border>
+
                     <views:StatusWidgetView Grid.Row="1" Margin="10"/>
+
+                    <Button Grid.Row="1" Content="SILENCIAR" 
+                            Command="{Binding SilenceCommand}"
+                            Style="{StaticResource SilenceButtonStyle}"
+                            HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                            Margin="0,0,0,10"/>
                 </Grid>
             </Border>
         </DataTemplate>
@@ -129,11 +215,15 @@
             </Grid>
         </Border>
 
-        <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" Background="#252525" Cursor="SizeWE"/>
+        <GridSplitter Grid.Column="1" 
+              Style="{StaticResource ColumnSplitterStyle}"
+              ResizeDirection="Columns" 
+              ShowsPreview="False"
+              Cursor="SizeWE"/>
 
         <Grid Grid.Column="2">
             <Grid.RowDefinitions>
-                <RowDefinition Height="75"/>
+                <RowDefinition Height="75" MinHeight="75"/>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="120" MinHeight="80" MaxHeight="450"/>
@@ -166,6 +256,11 @@
                     </StackPanel>
 
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                        <Button Content="AUDITORÍA DE ALARMAS" 
+                            Style="{StaticResource BtnDark}" 
+                            Click="BtnVerHistorial_Click" 
+                            Width="180" Margin="5"/>
+                        
                         <ToggleButton x:Name="btnConectar" 
                                     Content="CONECTAR SISTEMA" 
                                     Style="{StaticResource BtnConnectStyle}" 
@@ -203,7 +298,7 @@
             <GridSplitter Grid.Row="2" 
                           Style="{StaticResource VerticalSplitterStyle}"
                           ResizeDirection="Rows" 
-                          ShowsPreview="True"/>
+                          ShowsPreview="False"/>
 
             <Border Grid.Row="3" Background="#151515" BorderBrush="#333" BorderThickness="0,1,0,0" Padding="20,10">
                 <Grid>
@@ -224,9 +319,24 @@
                             <Button Content="LIMPIAR LOG" Style="{StaticResource BtnDark}" Height="18" Width="90" FontSize="8" Click="BtnLimpiarConsola_Click"/>
                         </StackPanel>
                     </DockPanel>
-                    <TextBox x:Name="txtConsola" Grid.Row="1" Background="Black" Foreground="#00FF00" FontFamily="Consolas" FontSize="11"
-                             BorderThickness="0" IsReadOnly="True" VerticalScrollBarVisibility="Auto" Padding="8"
-                             Text="[SISTEMA] Nodo central iniciado. Esperando despliegue de telemetría..." Grid.ColumnSpan="3"/>
+                    <RichTextBox x:Name="txtConsola" 
+                         Grid.Row="1" Grid.ColumnSpan="3"
+                         Background="Black" 
+                         FontFamily="Consolas" 
+                         FontSize="11"
+                         BorderThickness="0" 
+                         IsReadOnly="True" 
+                         VerticalScrollBarVisibility="Auto">
+                        <RichTextBox.Resources>
+                            <Style TargetType="{x:Type Paragraph}">
+                                <Setter Property="Margin" Value="0"/>
+                            </Style>
+                        </RichTextBox.Resources>
+                        <FlowDocument PagePadding="8">
+                            <Paragraph x:Name="logParagraph">
+                            </Paragraph>
+                        </FlowDocument>
+                    </RichTextBox>
                 </Grid>
             </Border>
         </Grid>

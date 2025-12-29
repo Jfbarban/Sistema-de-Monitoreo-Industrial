@@ -10,5 +10,6 @@ namespace Sistema_de_Monitoreo_Industrial.Models
         public string ChartType { get; set; } // Signal, Gauge, Bar, Status
         public string VariableTag { get; set; } // Temperatura, OEE, etc.
         public string RobotId { get; set; }
+        public double? AlertThreshold { get; set; } // Nullable, por si no quieren alerta
     }
 }

@@ -13,7 +13,7 @@ namespace Sistema_de_Monitoreo_Industrial.ViewModels.Widgets
         public WidgetSignalViewModel(string title, string robotId, string propertyName) 
             : base(title, robotId, propertyName) { }
 
-        public override void Update(DatosProduccion dato)
+        public override void ProcesarDato(DatosProduccion dato)
         {
             // Filtro por Robot
             if (!string.IsNullOrEmpty(RobotId) && !dato.NodoOrigen.Contains(RobotId)) return;

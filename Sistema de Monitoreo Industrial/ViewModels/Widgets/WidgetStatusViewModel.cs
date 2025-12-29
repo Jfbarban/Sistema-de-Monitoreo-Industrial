@@ -10,7 +10,7 @@ namespace Sistema_de_Monitoreo_Industrial.ViewModels.Widgets
 
         public WidgetStatusViewModel(string title, string robotId, string prop) : base(title, robotId, prop) { }
 
-        public override void Update(DatosProduccion dato)
+        public override void ProcesarDato(DatosProduccion dato)
         {
             if (!string.IsNullOrEmpty(RobotId) && !dato.NodoOrigen.Contains(RobotId)) return;
 

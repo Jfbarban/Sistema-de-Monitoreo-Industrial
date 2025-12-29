@@ -49,7 +49,7 @@ namespace Sistema_de_Monitoreo_Industrial.Services
                     // Si llegamos aquí, la conexión es exitosa
                     if (_reintentosFallidos > 0)
                     {
-                        LogConsola("SISTEMA", "Conexión restablecida con InfluxDB.", "#00FF00");
+                        LogConsola("SISTEMA", "Conexión restablecida con InfluxDB.");
                         _reintentosFallidos = 0;
                     }
 
@@ -80,11 +80,11 @@ namespace Sistema_de_Monitoreo_Industrial.Services
                 _reintentosFallidos++;
                 if (_reintentosFallidos <= MaxReintentos)
                 {
-                    LogConsola("ERROR", $"Fallo en lectura InfluxDB (Intento {_reintentosFallidos}/{MaxReintentos}): {ex.Message}", "#FF4444");
+                    LogConsola("ERROR", $"Fallo en lectura InfluxDB (Intento {_reintentosFallidos}/{MaxReintentos}): {ex.Message}");
 
                     if (_reintentosFallidos == MaxReintentos)
                     {
-                        LogConsola("CRÍTICO", "Se alcanzó el máximo de reintentos. Verifique la configuración de red.", "#FF0000");
+                        LogConsola("CRÍTICO", "Se alcanzó el máximo de reintentos. Verifique la configuración de red.");
                         _Conectado = true;
                         return null;
                     }
@@ -144,7 +144,7 @@ namespace Sistema_de_Monitoreo_Industrial.Services
         }
 
         // Método auxiliar para escribir en la consola de la MainWindow
-        public void LogConsola(string categoria, string mensaje, string colorHex)
+        public void LogConsola(string categoria, string mensaje)
         {
             Application.Current.Dispatcher.Invoke(() =>
             {
@@ -152,9 +152,8 @@ namespace Sistema_de_Monitoreo_Industrial.Services
                 if (mainWin == null) return;
 
                 // 1. Escribir en consola
-                string logMsg = $"\n[{DateTime.Now:HH:mm:ss}] [{categoria}] {mensaje}";
-                mainWin.txtConsola.AppendText(logMsg);
-                mainWin.txtConsola.ScrollToEnd();
+                string logMsg = $"[{categoria}] {mensaje}";
+                mainWin.EscribirEnConsola(logMsg);
 
                 // 2. Buscar Storyboard de forma segura
                 var sb = mainWin.FindResource("AlertaCriticaStoryboard") as System.Windows.Media.Animation.Storyboard;

@@ -1,7 +1,7 @@
 ﻿<Window x:Class="Sistema_de_Monitoreo_Industrial.Views.AddChartWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Configurar Widget | Vertex-IoT" Height="500" Width="400" 
+        Title="Configurar Widget | Vertex-IoT" Height="566" Width="400" 
         Background="Transparent" WindowStartupLocation="CenterOwner"
         WindowStyle="None" AllowsTransparency="True">
 
@@ -35,7 +35,15 @@
                 <Label Content="Variable (Métrica InfluxDB)" Foreground="Gray" FontSize="11" FontWeight="Bold"/>
                 <ComboBox x:Name="CmbProp" Margin="0,5,0,15" Height="35"
                           DisplayMemberPath="Nombre" SelectedValuePath="Tag" Style="{StaticResource ModernComboBox}"  SelectionChanged="CmbProp_SelectionChanged"/>
-                
+
+
+                <TextBlock Text="LÍMITE DE ALERTA (Opcional):" Foreground="White" Margin="0,10,0,5"/>
+                <TextBox x:Name="txtThreshold" 
+                 Background="#333" Foreground="White" 
+                 BorderBrush="{StaticResource OrangeAccent}"
+                 Padding="5" Height="30"
+                 ToolTip="Si el valor supera este número, parpadeará en rojo."/>    
+
             </StackPanel>
 
             <Grid Grid.Row="2">

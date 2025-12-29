@@ -9,7 +9,7 @@
 
         public WidgetBarViewModel(string title, string robotId, string prop) : base(title, robotId, prop) { }
 
-        public override void Update(Models.DatosProduccion dato)
+        public override void ProcesarDato(Models.DatosProduccion dato)
         {
             if (!string.IsNullOrEmpty(RobotId) && !dato.NodoOrigen.Contains(RobotId)) return;
             ValorActual = ExtractValue(dato);

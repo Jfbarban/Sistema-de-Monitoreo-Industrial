@@ -13,7 +13,7 @@ namespace Sistema_de_Monitoreo_Industrial.ViewModels
 {
     public class MainViewModel : BindableBase
     {
-        private readonly DatabaseService _dbService;
+        private DatabaseService _dbService;
         private readonly DispatcherTimer _timer;
 
         private bool _isConnected = false;
@@ -33,7 +33,7 @@ namespace Sistema_de_Monitoreo_Industrial.ViewModels
 
         public MainViewModel()
         {
-            _dbService = new DatabaseService();
+            
 
             // Comando para abrir ventana
             OpenAddWindowCommand = new RelayCommand(_ => AbrirVentanaConfig());
@@ -41,7 +41,18 @@ namespace Sistema_de_Monitoreo_Industrial.ViewModels
             // Timer
             _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
             _timer.Tick += async (s, e) => await LoopDatos();
+        }
+
+        public void IniciarConexion()
+        {
+            _dbService = new DatabaseService();
+            IsConnected = true;
             _timer.Start();
+        }
+        public void DetenerConexion()
+        {
+            IsConnected = false;
+            _timer.Stop();
         }
 
         private void AbrirVentanaConfig()
@@ -77,6 +88,9 @@ namespace Sistema_de_Monitoreo_Industrial.ViewModels
 
             if (nuevoWidgetVm != null)
             {
+                // --- AQUÍ ASIGNAMOS EL LÍMITE ---
+                nuevoWidgetVm.Threshold = config.AlertThreshold;
+
                 // Configuramos la acción de borrado que ya tenías
                 nuevoWidgetVm.OnRemoveRequested = (w) => Widgets.Remove(w);
 
@@ -98,7 +112,7 @@ namespace Sistema_de_Monitoreo_Industrial.ViewModels
 
                 // Usamos el Storyboard que arreglamos con el Clone() 
                 // para dejar el LED en rojo fijo
-                _dbService.LogConsola("SISTEMA", "Motor de telemetría detenido. Intervención requerida.", "#FF0000");
+                _dbService.LogConsola("SISTEMA", "Motor de telemetría detenido. Intervención requerida.");
 
                 return;
             }

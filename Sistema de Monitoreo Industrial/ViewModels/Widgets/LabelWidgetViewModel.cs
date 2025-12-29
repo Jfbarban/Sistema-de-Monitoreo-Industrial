@@ -30,7 +30,7 @@ namespace Sistema_de_Monitoreo_Industrial.ViewModels.Widgets
             // Este constructor se usará SOLO cuando abras el XAML en Visual Studio
         }
 
-        public override void Update(DatosProduccion dato)
+        public override void ProcesarDato(DatosProduccion dato)
         {
             // Buscamos la variable en el diccionario dinámico
             if (dato.Metricas.TryGetValue(VariableTag, out object val))

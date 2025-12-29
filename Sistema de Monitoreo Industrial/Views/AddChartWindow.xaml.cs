@@ -89,11 +89,18 @@ namespace Sistema_de_Monitoreo_Industrial.Views
                 }
 
                 CmbType.IsEnabled = false;
+                // NUEVO: Bloquear el campo de alerta si es texto
+                txtThreshold.Text = "";
+                txtThreshold.IsEnabled = false;
+                txtThreshold.Opacity = 0.5;
             }
             else
             {
                 // Si es un número (temperatura, etc.), permitimos elegir Gauge o Signal
                 CmbType.IsEnabled = true;
+                // NUEVO: Habilitar alerta si es un número (temperatura, presión, etc.)
+                txtThreshold.IsEnabled = true;
+                txtThreshold.Opacity = 1.0;
             }
         }
 
@@ -113,12 +120,34 @@ namespace Sistema_de_Monitoreo_Industrial.Views
                 return;
             }
 
+            // 1. CAPTURAR EL UMBRAL (THRESHOLD)
+            // Buscamos el TextBox del umbral (asegúrate que en el XAML se llame TxtThreshold)
+            double? alertValue = null;
+
+            // Solo intentamos leer el umbral si el campo no está vacío y es un número
+            // Usamos TxtThreshold que es el nombre estándar que te sugerí para el XAML
+            if (!string.IsNullOrWhiteSpace(txtThreshold.Text))
+            {
+                if (double.TryParse(txtThreshold.Text, out double result))
+                {
+                    alertValue = result;
+                }
+                else
+                {
+                    MessageBox.Show("El límite de alerta debe ser un número válido.", "Aviso", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+            }
+
             CreatedWidget = new ChartWidgetConfig
             {
                 Title = TxtTitle.Text,
                 ChartType = (CmbType.SelectedItem as dynamic).Tag,
                 VariableTag = (CmbProp.SelectedItem as dynamic).Tag,
-                RobotId = CmbRobot.SelectedItem.ToString()
+                RobotId = CmbRobot.SelectedItem.ToString(),
+
+                // 2. ASIGNAR EL VALOR AL OBJETO CONFIG
+                AlertThreshold = alertValue
             };
 
             this.DialogResult = true;
