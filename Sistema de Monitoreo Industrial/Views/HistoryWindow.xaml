@@ -1,7 +1,7 @@
 ﻿<Window x:Class="Sistema_de_Monitoreo_Industrial.Views.HistoryWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="AUDITORÍA DE EVENTOS CRÍTICOS" Height="450" Width="698"
+        Title="AUDITORÍA DE EVENTOS CRÍTICOS" Height="450" Width="698" MinHeight="450" MinWidth="698"
         Background="{StaticResource FondoOscuro}" WindowStartupLocation="CenterOwner">
 
     <Window.Resources>

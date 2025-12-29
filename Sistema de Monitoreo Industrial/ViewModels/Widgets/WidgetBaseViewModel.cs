@@ -2,6 +2,8 @@
 using Sistema_de_Monitoreo_Industrial.Models;
 using Sistema_de_Monitoreo_Industrial.Services;
 using System;
+using System.Media;
+using System.Numerics;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Input;
@@ -10,6 +12,11 @@ namespace Sistema_de_Monitoreo_Industrial.ViewModels.Widgets
 {
     public abstract class WidgetBaseViewModel : BindableBase
     {
+
+        // Cargamos el sonido desde la carpeta de ejecución
+        string rutaSonido = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "warning-alarm.wav");
+        SoundPlayer player;
+
         private string _title;
         public string Title { get => _title; set => SetProperty(ref _title, value); }
 
@@ -23,6 +30,9 @@ namespace Sistema_de_Monitoreo_Industrial.ViewModels.Widgets
             get => _isAlerting;
             set { _isAlerting = value; OnPropertyChanged(); }
         }
+
+        private bool _isSoundEnable;
+
         private bool _emailSent = false; // Candado para no hacer spam
         public ICommand SilenceCommand { get; private set; }
 
@@ -32,6 +42,9 @@ namespace Sistema_de_Monitoreo_Industrial.ViewModels.Widgets
         // EL CONSTRUCTOR DEBE RECIBIR Y ASIGNAR LA VARIABLE
         public WidgetBaseViewModel(string title, string robotId, string variableTag)
         {
+
+            player = new SoundPlayer(rutaSonido);
+
             Title = title;
             RobotId = robotId;
             VariableTag = variableTag; // <-- AQUÍ SE RECIBE EL VALOR DEL COMBOBOX
@@ -43,6 +56,7 @@ namespace Sistema_de_Monitoreo_Industrial.ViewModels.Widgets
         private void SilenciarAlerta()
         {
             IsAlerting = false;
+            ReproducirAlertaSonora(false);
             // Opcional: No reseteamos _emailSent para no volver a enviar correo 
             // hasta que el valor baje y vuelva a subir.
         }
@@ -62,6 +76,8 @@ namespace Sistema_de_Monitoreo_Industrial.ViewModels.Widgets
                     {
                         IsAlerting = true;
 
+                        _isSoundEnable = true;
+
                         // --- REGISTRO DE INICIO DE ALARMA ---
                         AlarmHistoryService.RegistrarAlarmaAsync(new AlarmLog
                         {
@@ -75,9 +91,16 @@ namespace Sistema_de_Monitoreo_Industrial.ViewModels.Widgets
                         });
                     }
 
+                    if (_isSoundEnable)
+                    {
+                        _isSoundEnable = false;
+                        ReproducirAlertaSonora(true);
+                    }
+
                     // Enviar correo si no se ha enviado ya en este ciclo de error
                     if (!_emailSent)
                     {
+
                         NotificationService.EnviarEmailGmailAsync(
                             $"ALERTA: {Title}",
                             $"La variable {VariableTag} en {RobotId} alcanzó {valorActual}. Límite: {Threshold.Value}");
@@ -92,7 +115,7 @@ namespace Sistema_de_Monitoreo_Industrial.ViewModels.Widgets
                     {
                         IsAlerting = false;
 
-                        IsAlerting = false;
+                        ReproducirAlertaSonora(false);
 
                         // --- REGISTRO DE VUELTA A LA NORMALIDAD ---
                         AlarmHistoryService.RegistrarAlarmaAsync(new AlarmLog
@@ -113,6 +136,27 @@ namespace Sistema_de_Monitoreo_Industrial.ViewModels.Widgets
 
             // 2. Procesamiento específico del gráfico (Signal, Gauge, etc.)
             ProcesarDato(dato);
+        }
+
+        private void ReproducirAlertaSonora( bool lanzar )
+        {
+            try
+            {
+                
+
+                if (System.IO.File.Exists(rutaSonido) && lanzar)
+                {
+                    player.PlayLooping(); // .Play() no bloquea la interfaz; .PlaySync() sí lo haría.
+                }
+                else
+                {
+                    player.Stop();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("No se pudo reproducir el sonido: " + ex.Message);
+            }
         }
 
 
