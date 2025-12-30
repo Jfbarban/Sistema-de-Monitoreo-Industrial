@@ -18,11 +18,28 @@ namespace Sistema_de_Monitoreo_Industrial.Views
     {
         private readonly MainViewModel _viewModel;
 
+        // 1. Definimos la propiedad que leerá el XAML
+        public string UsuarioNombreLogueado { get; set; }
+
+        public string UsuarioRolLogueado { get; set; }
+
         private string rutaMasterDashboards = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "dashboards_master.json");
 
         public MainWindow()
         {
             InitializeComponent();
+
+            if (SessionManager.UsuarioActual != null)
+            {
+                UsuarioNombreLogueado = SessionManager.UsuarioActual.Username.ToUpper();
+                UsuarioRolLogueado = SessionManager.UsuarioActual.Role.ToString().ToUpper();
+            }
+            else
+            {
+                UsuarioNombreLogueado = "INVITADO";
+                UsuarioRolLogueado = "N/A";
+            }
+            this.DataContext = this;
 
             // 1. Estado inicial
             btnConectar.IsChecked = false;
@@ -43,7 +60,39 @@ namespace Sistema_de_Monitoreo_Industrial.Views
             panelDashboardsSaved.Children.Clear();
 
             txtConsola.ScrollToEnd();
-        } 
+        }
+
+        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            if (SessionManager.UsuarioActual != null)
+            {
+                UsuarioNombreLogueado = SessionManager.UsuarioActual.Username.ToUpper();
+            }
+            this.DataContext = this;
+        }
+
+        // Muestra el menú cuando haces clic en el botón de usuario
+        private void btnUserMenu_Click(object sender, RoutedEventArgs e)
+        {
+            userContextMenu.PlacementTarget = btnUserMenu;
+            userContextMenu.IsOpen = true;
+        }
+
+        // Evento para cambiar la contraseña (Placeholder por ahora)
+        private void MenuItemPassword_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("Aquí abriremos la ventana para cambiar tu contraseña.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        // Evento para cerrar sesión
+        private void Logout_Click(object sender, RoutedEventArgs e)
+        {
+            if (MessageBox.Show("¿Desea cerrar la sesión actual?", "Cerrar Sesión", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+            {
+                System.Diagnostics.Process.Start(Application.ResourceAssembly.Location);
+                Application.Current.Shutdown();
+            }
+        }
 
         // --- REFRESCAR PANEL (Desde un único archivo) ---
         public void RefrescarListaDashboards()

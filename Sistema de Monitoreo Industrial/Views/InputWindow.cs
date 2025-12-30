@@ -13,7 +13,7 @@ namespace Sistema_de_Monitoreo_Industrial.Views
         public string Respuesta { get; private set; }
         private TextBox txtInput;
 
-        public InputWindow()
+        public InputWindow(string tituloLabel = "NOMBRE DEL DASHBOARD")
         {
             // 1. Configuración de Ventana (Estilo Moderno / Transparente)
             Title = "Guardar";
@@ -44,7 +44,7 @@ namespace Sistema_de_Monitoreo_Industrial.Views
             // Etiqueta
             TextBlock lbl = new TextBlock
             {
-                Text = "NOMBRE DEL DASHBOARD",
+                Text = tituloLabel.ToUpper(),
                 Foreground = Brushes.Gray,
                 FontSize = 10,
                 FontWeight = FontWeights.Bold,

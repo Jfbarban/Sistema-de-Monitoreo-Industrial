@@ -90,6 +90,8 @@
                     <DataGridTextColumn Header="VARIABLE" Binding="{Binding Variable}" Width="100"/>
                     <DataGridTextColumn Header="VALOR" Binding="{Binding Valor}" Width="80"/>
                     <DataGridTextColumn Header="ESTADO" Binding="{Binding Mensaje}" Width="*"/>
+                    <DataGridTextColumn Header="Acción Correctiva" Binding="{Binding ComentarioOperador}" Width="*"/>
+                    <DataGridTextColumn Header="Reconocida el" Binding="{Binding FechaReconocimiento, StringFormat='dd/MM HH:mm'}" Width="100"/>
                     <DataGridTemplateColumn Header="TIPO" Width="80">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>

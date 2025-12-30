@@ -1,10 +1,13 @@
 ﻿using Sistema_de_Monitoreo_Industrial.Core;
 using Sistema_de_Monitoreo_Industrial.Models;
 using Sistema_de_Monitoreo_Industrial.Services;
+using Sistema_de_Monitoreo_Industrial.Views;
 using System;
+using System.IO;
 using System.Media;
 using System.Numerics;
 using System.Reflection;
+using System.Text.Json;
 using System.Windows;
 using System.Windows.Input;
 
@@ -55,10 +58,59 @@ namespace Sistema_de_Monitoreo_Industrial.ViewModels.Widgets
 
         private void SilenciarAlerta()
         {
-            IsAlerting = false;
-            ReproducirAlertaSonora(false);
+            // 1. Abrir ventana de comentario
+            // Reutilizamos tu InputWindow con un título específico para alarmas
+            InputWindow inputDialog = new InputWindow("REGISTRO DE ACCIÓN CORRECTIVA");
+
+            if (inputDialog.ShowDialog() == true)
+            {
+                string comentario = inputDialog.Respuesta;
+
+                // 2. Detener sonido y alerta visual
+                IsAlerting = false;
+
+                ReproducirAlertaSonora(false);
+
+                // 3. Actualizar el registro en el JSON (Audit Trail)
+                RegistrarComentarioEnHistorial(comentario);
+            }
+            else
+            {
+                // 2. Detener sonido y alerta visual
+                IsAlerting = false;
+
+                ReproducirAlertaSonora(false);
+
+                // 3. Actualizar el registro en el JSON (Audit Trail)
+                RegistrarComentarioEnHistorial(null);
+            }
+            
+            
             // Opcional: No reseteamos _emailSent para no volver a enviar correo 
             // hasta que el valor baje y vuelva a subir.
+        }
+        private void RegistrarComentarioEnHistorial(string comentario)
+        {
+            lock (LogMaintenanceService.ArchivoLock)
+            {
+                string ruta = "alarm_history.json";
+                if (File.Exists(ruta) && comentario != null)
+                {
+                    var json = File.ReadAllText(ruta);
+                    var lista = JsonSerializer.Deserialize<List<AlarmLog>>(json);
+
+                    // Buscamos la última alarma activa de este robot para ponerle el comentario
+                    var ultimaAlarma = lista.LastOrDefault(x => x.EsInicio && !x.Reconocida);
+                    if (ultimaAlarma != null)
+                    {
+                        ultimaAlarma.Reconocida = true;
+                        ultimaAlarma.ComentarioOperador = comentario;
+                        ultimaAlarma.FechaReconocimiento = DateTime.Now;
+                    }
+
+                    File.WriteAllText(ruta, JsonSerializer.Serialize(lista));
+                }
+            }
         }
 
         public void Update(DatosProduccion dato)

@@ -115,7 +115,7 @@ namespace Sistema_de_Monitoreo_Industrial.Views
                 try
                 {
                     StringBuilder csvContent = new StringBuilder();
-                    csvContent.AppendLine("Fecha/Hora;Nodo;Variable;Valor;Estado;Tipo");
+                    csvContent.AppendLine("Fecha/Hora;Nodo;Variable;Valor;Estado;Tipo;Reconocida;ComentarioOperador;FechaReconocimiento");
 
                     foreach (var item in _historyView)
                     {
@@ -128,7 +128,10 @@ namespace Sistema_de_Monitoreo_Industrial.Views
                                                   $"{log.Variable};" +
                                                   $"{log.Valor};" +
                                                   $"{log.Mensaje};" +
-                                                  $"{tipo}");
+                                                  $"{tipo};" +
+                                                  $"{log.Reconocida};" +
+                                                  $"{log.ComentarioOperador};" +
+                                                  $"{log.FechaReconocimiento}");
                         }
                     }
 

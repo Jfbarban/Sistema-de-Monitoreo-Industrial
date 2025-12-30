@@ -13,5 +13,9 @@ namespace Sistema_de_Monitoreo_Industrial.Models
         public double Umbral { get; set; }
         public string Mensaje { get; set; }
         public bool EsInicio { get; set; } // True si la alarma empezó, False si volvió a la normalidad
+
+        public bool Reconocida { get; set; } = false;
+        public string ComentarioOperador { get; set; } = "";
+        public DateTime? FechaReconocimiento { get; set; }
     }
 }
