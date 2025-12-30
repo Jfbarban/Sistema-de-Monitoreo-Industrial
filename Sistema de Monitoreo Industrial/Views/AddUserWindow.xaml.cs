@@ -30,7 +30,11 @@ namespace Sistema_de_Monitoreo_Industrial.Views
             // 1. Validaciones básicas
             if (string.IsNullOrEmpty(user) || string.IsNullOrEmpty(pass))
             {
-                MessageBox.Show("Por favor complete todos los campos.", "Aviso");
+                ConfirmDialog aviso = new ConfirmDialog("Por favor complete todos los campos.");
+                aviso.Owner = this; // Centrar sobre la ventana de configuración
+                aviso.ConfigurarComoAviso(); // Oculta el botón cancelar y cambia texto a 'ENTENDIDO'
+                aviso.ShowDialog();
+
                 return;
             }
 
@@ -39,7 +43,11 @@ namespace Sistema_de_Monitoreo_Industrial.Views
             // 2. Verificar si ya existe
             if (usuarios.Any(u => u.Username.ToLower() == user.ToLower()))
             {
-                MessageBox.Show("Este nombre de usuario ya está registrado.", "Error");
+                ConfirmDialog aviso = new ConfirmDialog("Este nombre de usuario ya está registrado.");
+                aviso.Owner = this; // Centrar sobre la ventana de configuración
+                aviso.ConfigurarComoAviso(); // Oculta el botón cancelar y cambia texto a 'ENTENDIDO'
+                aviso.ShowDialog();
+
                 return;
             }
 
@@ -55,7 +63,11 @@ namespace Sistema_de_Monitoreo_Industrial.Views
             usuarios.Add(nuevoUsuario);
             _securityService.GuardarUsuarios(usuarios);
 
-            MessageBox.Show($"Usuario {user} registrado con éxito.", "Éxito");
+            ConfirmDialog aviso = new ConfirmDialog($"Usuario {user} registrado con éxito.");
+            aviso.Owner = this; // Centrar sobre la ventana de configuración
+            aviso.ConfigurarComoAviso(); // Oculta el botón cancelar y cambia texto a 'ENTENDIDO'
+            aviso.ShowDialog();
+
             this.DialogResult = true;
             this.Close();
         }

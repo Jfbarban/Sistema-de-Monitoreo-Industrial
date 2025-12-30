@@ -134,7 +134,11 @@ namespace Sistema_de_Monitoreo_Industrial.Views
                 userDb.PasswordHash = _securityService.GenerarHash(txtPass1.Password);
                 _securityService.GuardarUsuarios(usuarios);
 
-                MessageBox.Show("Contraseña actualizada correctamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
+                ConfirmDialog aviso = new ConfirmDialog("Contraseña actualizada correctamente.");
+                aviso.Owner = this; // Centrar sobre la ventana de configuración
+                aviso.ConfigurarComoAviso(); // Oculta el botón cancelar y cambia texto a 'ENTENDIDO'
+                aviso.ShowDialog();
+
                 this.DialogResult = true;
                 this.Close();
             }

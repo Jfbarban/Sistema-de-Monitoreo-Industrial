@@ -134,7 +134,10 @@ namespace Sistema_de_Monitoreo_Industrial.Views
                 }
                 else
                 {
-                    MessageBox.Show("El límite de alerta debe ser un número válido.", "Aviso", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    ConfirmDialog aviso = new ConfirmDialog("El límite de alerta debe ser un número válido.");
+                    aviso.Owner = this; // Centrar sobre la ventana de configuración
+                    aviso.ConfigurarComoAviso(); // Oculta el botón cancelar y cambia texto a 'ENTENDIDO'
+                    aviso.ShowDialog();
                     return;
                 }
             }

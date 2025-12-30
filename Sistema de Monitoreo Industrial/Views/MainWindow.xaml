@@ -235,7 +235,7 @@
                 <Grid Margin="25,0">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <StackPanel>
-                            <TextBlock Text="SISTEMA DE MONITOREO INDUSTRIAL" Foreground="White" FontSize="18" FontWeight="Black"/>
+                            <TextBlock Text="SISTEMA DE MONITOREO" Foreground="White" FontSize="18" FontWeight="Black"/>
                             <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
                                 <Ellipse x:Name="LedOnline" Width="10" Height="10" Fill="Red" Margin="0,0,10,0">
                                     <Ellipse.Style>

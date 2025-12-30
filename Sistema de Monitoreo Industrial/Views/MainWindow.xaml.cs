@@ -113,7 +113,11 @@ namespace Sistema_de_Monitoreo_Industrial.Views
         // Evento para cerrar sesión
         private void Logout_Click(object sender, RoutedEventArgs e)
         {
-            if (MessageBox.Show("¿Desea cerrar la sesión actual?", "Cerrar Sesión", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+            ConfirmDialog aviso = new ConfirmDialog("¿Desea cerrar la sesión actual?");
+            aviso.Owner = this; // Centrar sobre la ventana de configuración
+            
+
+            if (aviso.ShowDialog() == true)
             {
                 // 1. Obtenemos la ruta del ejecutable actual
                 string appPath = System.Reflection.Assembly.GetEntryAssembly().Location;

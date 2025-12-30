@@ -108,8 +108,10 @@ namespace Sistema_de_Monitoreo_Industrial.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al guardar la configuración: {ex.Message}",
-                                "Error de Archivo", MessageBoxButton.OK, MessageBoxImage.Error);
+                ConfirmDialog aviso = new ConfirmDialog($"Error al guardar la configuración: {ex.Message}");
+                aviso.Owner = this; // Centrar sobre la ventana de configuración
+                aviso.ConfigurarComoAviso(); // Oculta el botón cancelar y cambia texto a 'ENTENDIDO'
+                aviso.ShowDialog();
             }
         }
 

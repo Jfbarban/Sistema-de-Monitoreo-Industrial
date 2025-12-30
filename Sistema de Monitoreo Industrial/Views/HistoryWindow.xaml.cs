@@ -87,7 +87,13 @@ namespace Sistema_de_Monitoreo_Industrial.Views
                     catch (Exception ex)
                     {
                         // En refresco automático no mostramos error para no interrumpir al usuario
-                        if (!esAutomatico) MessageBox.Show("Error: " + ex.Message);
+                        if (!esAutomatico)
+                        {
+                            ConfirmDialog aviso = new ConfirmDialog("Error: " + ex.Message);
+                            aviso.Owner = this; // Centrar sobre la ventana de configuración
+                            aviso.ConfigurarComoAviso(); // Oculta el botón cancelar y cambia texto a 'ENTENDIDO'
+                            aviso.ShowDialog();
+                        }
                     }
                 }
             }
@@ -136,13 +142,18 @@ namespace Sistema_de_Monitoreo_Industrial.Views
                     }
 
                     File.WriteAllText(sfd.FileName, csvContent.ToString(), Encoding.UTF8);
-                    MessageBox.Show("Archivo exportado con éxito.", "Exportar Datos",
-                                    MessageBoxButton.OK, MessageBoxImage.Information);
+
+                    ConfirmDialog aviso = new ConfirmDialog("Archivo exportado con éxito.");
+                    aviso.Owner = this; // Centrar sobre la ventana de configuración
+                    aviso.ConfigurarComoAviso(); // Oculta el botón cancelar y cambia texto a 'ENTENDIDO'
+                    aviso.ShowDialog();
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Error al exportar: {ex.Message}", "Error",
-                                    MessageBoxButton.OK, MessageBoxImage.Error);
+                    ConfirmDialog aviso = new ConfirmDialog($"Error al exportar: {ex.Message}");
+                    aviso.Owner = this; // Centrar sobre la ventana de configuración
+                    aviso.ConfigurarComoAviso(); // Oculta el botón cancelar y cambia texto a 'ENTENDIDO'
+                    aviso.ShowDialog();
                 }
             }
         }

@@ -29,8 +29,11 @@ namespace Sistema_de_Monitoreo_Industrial.Views
             }
             else
             {
-                MessageBox.Show("Credenciales incorrectas. Verifique su usuario y contraseña.",
-                                "Error de Acceso", MessageBoxButton.OK, MessageBoxImage.Error);
+                ConfirmDialog aviso = new ConfirmDialog("Credenciales incorrectas. Verifique su usuario y contraseña.");
+                aviso.Owner = this; // Centrar sobre la ventana de configuración
+                aviso.ConfigurarComoAviso(); // Oculta el botón cancelar y cambia texto a 'ENTENDIDO'
+                aviso.ShowDialog();
+
                 txtPass.Clear();
                 txtPass.Focus();
             }

@@ -40,11 +40,18 @@ namespace Sistema_de_Monitoreo_Industrial.Views
 
             if (user.Username.ToLower() == "admin")
             {
-                MessageBox.Show("No se puede eliminar al administrador raíz.", "Seguridad");
+                ConfirmDialog aviso = new ConfirmDialog("No se puede eliminar al administrador raíz.");
+                aviso.Owner = this; // Centrar sobre la ventana de configuración
+                aviso.ConfigurarComoAviso(); // Oculta el botón cancelar y cambia texto a 'ENTENDIDO'
+                aviso.ShowDialog();
+
                 return;
             }
 
-            if (MessageBox.Show($"¿Eliminar usuario {user.Username}?", "Confirmar", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+            ConfirmDialog aviso = new ConfirmDialog($"¿Eliminar usuario {user.Username}?");
+            aviso.Owner = this; // Centrar sobre la ventana de configuración
+
+            if (aviso.ShowDialog() == true)
             {
                 var usuarios = _securityService.CargarUsuarios();
                 var userParaBorrar = usuarios.Find(u => u.Username == user.Username);
