@@ -1,0 +1,29 @@
+﻿<Window x:Class="Sistema_de_Monitoreo_Industrial.Views.AddUserWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Registrar Operador" Height="450" Width="380" SizeToContent="Height"
+        Background="#121212" WindowStartupLocation="CenterOwner" ResizeMode="NoResize" WindowStyle="None">
+
+    <Border Padding="30">
+        <StackPanel>
+            <TextBlock Text="NUEVO USUARIO" Foreground="{StaticResource OrangeAccent}" 
+                       FontSize="16" FontWeight="Black" Margin="0,0,0,20"/>
+
+            <TextBlock Text="NOMBRE DE USUARIO" Foreground="Gray" FontSize="10" FontWeight="Bold" Margin="0,0,0,5"/>
+            <TextBox x:Name="txtUsername" Height="35" Background="#181818" Foreground="White" 
+                     BorderBrush="#333" VerticalContentAlignment="Center" Padding="5"/>
+
+            <TextBlock Text="NIVEL DE ACCESO" Foreground="Gray" FontSize="10" FontWeight="Bold" Margin="0,15,0,5"/>
+            <ComboBox x:Name="cbRoles" Height="35" Style="{StaticResource ModernComboBox}" BorderBrush="#333" VerticalContentAlignment="Center">
+            </ComboBox>
+
+            <TextBlock Text="CONTRASEÑA TEMPORAL" Foreground="Gray" FontSize="10" FontWeight="Bold" Margin="0,15,0,5"/>
+            <PasswordBox x:Name="txtPassword" Height="35" Style="{StaticResource ModernPasswordBoxStyle}"/>
+
+            <Button x:Name="btnRegistrar" Content="REGISTRAR ACCESO" Height="45" Margin="0,30,0,0"
+                    Style="{StaticResource BtnPlay}" Click="BtnRegistrar_Click"/>
+
+            <ToggleButton Content="CANCELAR" Background="Transparent" Style="{StaticResource BtnSaveHistorial}" Foreground="{StaticResource OrangeAccent}" Height="41" Margin="0,10,0,0" Cursor="Hand" Click="BtnCancelar_Click"/>
+        </StackPanel>
+    </Border>
+</Window>

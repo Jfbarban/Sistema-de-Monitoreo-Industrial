@@ -33,6 +33,11 @@ namespace Sistema_de_Monitoreo_Industrial.Views
             {
                 UsuarioNombreLogueado = SessionManager.UsuarioActual.Username.ToUpper();
                 UsuarioRolLogueado = SessionManager.UsuarioActual.Role.ToString().ToUpper();
+                // Si es admin, mostramos el botón
+                if (SessionManager.UsuarioActual.Role.ToString().ToLower() == "admin")
+                {
+                    menuItemAdmin.Visibility = Visibility.Visible;
+                }
             }
             else
             {
@@ -71,6 +76,15 @@ namespace Sistema_de_Monitoreo_Industrial.Views
             this.DataContext = this;
         }
 
+        // EL MÉTODO PARA ABRIR LA VENTANA DE GESTION DE USUARIOS:
+        private void MenuItemGestion_Click(object sender, RoutedEventArgs e)
+        {
+            // Creamos e invocamos la ventana de gestión
+            UserManagementWindow win = new UserManagementWindow();
+            win.Owner = this; // Para que aparezca centrada sobre la principal
+            win.ShowDialog();
+        }
+
         // Muestra el menú cuando haces clic en el botón de usuario
         private void btnUserMenu_Click(object sender, RoutedEventArgs e)
         {
@@ -81,7 +95,9 @@ namespace Sistema_de_Monitoreo_Industrial.Views
         // Evento para cambiar la contraseña (Placeholder por ahora)
         private void MenuItemPassword_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Aquí abriremos la ventana para cambiar tu contraseña.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+            ChangePasswordWindow win = new ChangePasswordWindow();
+            win.Owner = this; // Para que se centre respecto a la principal
+            win.ShowDialog();
         }
 
         // Evento para cerrar sesión
@@ -89,7 +105,17 @@ namespace Sistema_de_Monitoreo_Industrial.Views
         {
             if (MessageBox.Show("¿Desea cerrar la sesión actual?", "Cerrar Sesión", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
             {
-                System.Diagnostics.Process.Start(Application.ResourceAssembly.Location);
+                // 1. Obtenemos la ruta del ejecutable actual
+                string appPath = System.Reflection.Assembly.GetEntryAssembly().Location;
+
+                // Si es un .exe de .NET Core/5+, a veces necesitas el .exe específicamente
+                if (appPath.EndsWith(".dll"))
+                    appPath = appPath.Replace(".dll", ".exe");
+
+                // 2. Iniciamos una nueva instancia del programa
+                System.Diagnostics.Process.Start(appPath);
+
+                // 3. Cerramos la instancia actual de golpe
                 Application.Current.Shutdown();
             }
         }

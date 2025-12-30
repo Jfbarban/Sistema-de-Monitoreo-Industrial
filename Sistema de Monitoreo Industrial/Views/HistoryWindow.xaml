@@ -6,37 +6,6 @@
 
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
-        <Style TargetType="{x:Type DataGridCell}">
-            <Setter Property="Padding" Value="10,5"/>
-            <Setter Property="BorderThickness" Value="0,0,1,0"/>
-            <Setter Property="BorderBrush" Value="#333"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="{x:Type DataGridCell}">
-                        <Border Background="{TemplateBinding Background}" 
-                            BorderBrush="{TemplateBinding BorderBrush}" 
-                            BorderThickness="{TemplateBinding BorderThickness}">
-                            <ContentPresenter VerticalAlignment="Center"/>
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-            <Style.Triggers>
-                <Trigger Property="IsSelected" Value="True">
-                    <Setter Property="Background" Value="#3D3D3D"/>
-                    <Setter Property="Foreground" Value="{StaticResource OrangeAccent}"/>
-                    <Setter Property="BorderBrush" Value="{StaticResource OrangeAccent}"/>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-
-        <Style TargetType="{x:Type DataGridRow}">
-            <Style.Resources>
-                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="#3D3D3D"/>
-                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="White"/>
-                <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="#2D2D2D"/>
-            </Style.Resources>
-        </Style>
     </Window.Resources>
 
     <Grid Margin="20">

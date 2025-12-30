@@ -12,6 +12,8 @@
 
     <Window.Resources>
 
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+
         <Style x:Key="SilenceButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="#CCFF0000"/>
             <Setter Property="Foreground" Value="White"/>
@@ -260,7 +262,7 @@
                             Style="{StaticResource BtnDark}" 
                             Click="BtnVerHistorial_Click" 
                             Width="180" Margin="5"/>
-                        
+
                         <ToggleButton x:Name="btnConectar" 
                                     Content="CONECTAR SISTEMA" 
                                     Style="{StaticResource BtnConnectStyle}" 
@@ -281,7 +283,13 @@
                         <Button x:Name="btnUserMenu" Background="Transparent" BorderThickness="0" Cursor="Hand" Click="btnUserMenu_Click">
                             <Button.Template>
                                 <ControlTemplate TargetType="Button">
-                                    <Border Background="#252525" CornerRadius="18" Padding="12,4" Margin="0,0,10,0" x:Name="UserBorder">
+                                    <Border x:Name="border" Background="#252525" 
+                                        BorderBrush="Transparent" 
+                                        BorderThickness="3" 
+                                        CornerRadius="16" Padding="5">
+                                        <Border.RenderTransform>
+                                            <ScaleTransform x:Name="TransformScale" ScaleX="1" ScaleY="1"/>
+                                        </Border.RenderTransform>
                                         <StackPanel Orientation="Horizontal">
                                             <Ellipse Width="24" Height="24" Fill="{StaticResource OrangeAccent}">
                                                 <Ellipse.OpacityMask>
@@ -307,11 +315,78 @@
                                             <TextBlock Text="▾" Foreground="Gray" VerticalAlignment="Center" Margin="0,2,0,0"/>
                                         </StackPanel>
                                     </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="border" Property="Background" Value="#333"/>
+                                            <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource OrangeAccent}"/>
+                                        </Trigger>
+                                        <Trigger Property="IsPressed" Value="True">
+                                            <Trigger.EnterActions>
+                                                <BeginStoryboard>
+                                                    <Storyboard>
+                                                        <DoubleAnimation Storyboard.TargetName="TransformScale" 
+                                                             Storyboard.TargetProperty="ScaleX" 
+                                                             To="0.85" Duration="0:0:0.05"/>
+                                                        <DoubleAnimation Storyboard.TargetName="TransformScale" 
+                                                             Storyboard.TargetProperty="ScaleY" 
+                                                             To="0.85" Duration="0:0:0.05"/>
+                                                    </Storyboard>
+                                                </BeginStoryboard>
+                                            </Trigger.EnterActions>
+                                            <Trigger.ExitActions>
+                                                <BeginStoryboard>
+                                                    <Storyboard>
+                                                        <DoubleAnimation Storyboard.TargetName="TransformScale" 
+                                                             Storyboard.TargetProperty="ScaleX" 
+                                                             To="1" Duration="0:0:0.1"/>
+                                                        <DoubleAnimation Storyboard.TargetName="TransformScale" 
+                                                             Storyboard.TargetProperty="ScaleY" 
+                                                             To="1" Duration="0:0:0.1"/>
+                                                    </Storyboard>
+                                                </BeginStoryboard>
+                                            </Trigger.ExitActions>
+                                        </Trigger>
+                                        <EventTrigger RoutedEvent="PreviewMouseDown">
+                                            <BeginStoryboard>
+                                                <Storyboard>
+                                                    <DoubleAnimation Storyboard.TargetName="border" 
+                                                         Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
+                                                         To="0.95" Duration="0:0:0.05"/>
+                                                    <DoubleAnimation Storyboard.TargetName="border" 
+                                                         Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                                                         To="0.95" Duration="0:0:0.05"/>
+                                                </Storyboard>
+                                            </BeginStoryboard>
+                                        </EventTrigger>
+                                        <EventTrigger RoutedEvent="PreviewMouseUp">
+                                            <BeginStoryboard>
+                                                <Storyboard>
+                                                    <DoubleAnimation Storyboard.TargetName="border" 
+                                                     Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
+                                                     To="1.0" Duration="0:0:0.05"/>
+                                                    <DoubleAnimation Storyboard.TargetName="border" 
+                                                         Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                                                         To="1.0" Duration="0:0:0.05"/>
+                                                </Storyboard>
+                                            </BeginStoryboard>
+                                        </EventTrigger>
+                                    </ControlTemplate.Triggers>
+                                    
                                 </ControlTemplate>
                             </Button.Template>
 
                             <Button.ContextMenu>
                                 <ContextMenu x:Name="userContextMenu" Style="{StaticResource ModernContextMenu}">
+                                    <MenuItem x:Name="menuItemAdmin" Header="Panel de Administración" 
+                                          Click="MenuItemGestion_Click"
+                                          Visibility="{Binding EsAdmin, Converter={StaticResource BooleanToVisibilityConverter}, RelativeSource={RelativeSource AncestorType=Window}}">
+                                        <MenuItem.Icon>
+                                            <TextBlock Text="👥" FontSize="12" VerticalAlignment="Center"/>
+                                        </MenuItem.Icon>
+                                    </MenuItem>
+
+                                    <Separator Background="#333" Height="1" Margin="5,2" 
+                                               Visibility="{Binding EsAdmin, Converter={StaticResource BooleanToVisibilityConverter}, RelativeSource={RelativeSource AncestorType=Window}}"/>
                                     <MenuItem Header="Cambiar Contraseña" Click="MenuItemPassword_Click">
                                         <MenuItem.Icon>
                                             <TextBlock Text="🔑" VerticalAlignment="Center" HorizontalAlignment="Center"/>
