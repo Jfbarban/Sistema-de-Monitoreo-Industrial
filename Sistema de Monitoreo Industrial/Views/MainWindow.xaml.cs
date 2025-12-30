@@ -21,6 +21,10 @@ namespace Sistema_de_Monitoreo_Industrial.Views
         // 1. Definimos la propiedad que leerá el XAML
         public string UsuarioNombreLogueado { get; set; }
 
+        // Propiedades de permisos
+        public bool PuedeConfigurar { get; set; }
+        public bool PuedeControlarDashboard { get; set; }
+
         public string UsuarioRolLogueado { get; set; }
 
         private string rutaMasterDashboards = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "dashboards_master.json");
@@ -33,8 +37,13 @@ namespace Sistema_de_Monitoreo_Industrial.Views
             {
                 UsuarioNombreLogueado = SessionManager.UsuarioActual.Username.ToUpper();
                 UsuarioRolLogueado = SessionManager.UsuarioActual.Role.ToString().ToUpper();
+
+                PuedeConfigurar = (UsuarioRolLogueado == UserRole.Administrador.ToString().ToUpper() || UsuarioRolLogueado == UserRole.Mantenimiento.ToString().ToUpper());
+
+                PuedeControlarDashboard = (UsuarioRolLogueado == UserRole.Administrador.ToString().ToUpper() || UsuarioRolLogueado == UserRole.Operador.ToString().ToUpper());
+
                 // Si es admin, mostramos el botón
-                if (SessionManager.UsuarioActual.Role.ToString().ToLower() == "admin")
+                if (SessionManager.UsuarioActual.Role.ToString().ToUpper() == UserRole.Administrador.ToString().ToUpper())
                 {
                     menuItemAdmin.Visibility = Visibility.Visible;
                 }
@@ -44,6 +53,7 @@ namespace Sistema_de_Monitoreo_Industrial.Views
                 UsuarioNombreLogueado = "INVITADO";
                 UsuarioRolLogueado = "N/A";
             }
+
             this.DataContext = this;
 
             // 1. Estado inicial

@@ -201,7 +201,7 @@
                     Style="{StaticResource BtnSave}" 
                     Margin="0,0,0,15" 
                     Height="35"
-                    Click="BtnGuardarLayout_Click"/>
+                    Click="BtnGuardarLayout_Click" IsEnabled="{Binding PuedeControlarDashboard, RelativeSource={RelativeSource AncestorType=Window}}"/>
 
                     <TextBlock Text="DASHBOARDS GUARDADOS" 
                        Foreground="#555" 
@@ -258,10 +258,10 @@
                     </StackPanel>
 
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                        <Button Content="AUDITORÍA DE ALARMAS" 
+                        <Button Content="📊 AUDITORÍA DE ALARMAS" 
                             Style="{StaticResource BtnDark}" 
                             Click="BtnVerHistorial_Click" 
-                            Width="180" Margin="5"/>
+                            Width="180" Margin="5" IsEnabled="{Binding PuedeConfigurar, RelativeSource={RelativeSource AncestorType=Window}}"/>
 
                         <ToggleButton x:Name="btnConectar" 
                                     Content="CONECTAR SISTEMA" 
@@ -402,7 +402,7 @@
                             </Button.ContextMenu>
                         </Button>
 
-                        <Button x:Name="btnConfig" Content="⚙" Background="Transparent" 
+                        <Button x:Name="btnConfig" Content="⚙" IsEnabled="{Binding PuedeConfigurar, RelativeSource={RelativeSource AncestorType=Window}}" Background="Transparent" 
                                     Style="{StaticResource BtnConfigStyle}" Foreground="{StaticResource TextDim}" 
                                     FontSize="25" Margin="0,0,15,0" Cursor="Hand" Click="btnConfig_Click"/>
                     </StackPanel>
