@@ -7,7 +7,7 @@
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
         WindowStyle="None"
-        AllowsTransparency="True">
+        AllowsTransparency="True" ShowInTaskbar="False">
 
     <Border BorderBrush="#333" BorderThickness="1" CornerRadius="15" Background="{StaticResource FondoOscuro}">
         <Grid Margin="20">

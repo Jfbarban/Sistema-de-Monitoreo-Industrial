@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Acceso al Sistema" Height="450" Width="400"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
-        WindowStartupLocation="CenterScreen" MouseDown="Window_MouseDown">
+        WindowStartupLocation="CenterScreen" MouseDown="Window_MouseDown" Icon="/Resources/Icono.ico" ShowInTaskbar="False">
 
     <Border Background="#1E1E1E" CornerRadius="20" BorderBrush="#333" BorderThickness="1.5">
         <StackPanel Margin="40">

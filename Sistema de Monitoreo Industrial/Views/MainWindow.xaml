@@ -8,7 +8,7 @@
         mc:Ignorable="d"
         Title="Vertex-IoT | Control Panel" Height="533" Width="1264" MinHeight="533" MinWidth="1264" 
         Background="{StaticResource FondoOscuro}"
-        WindowStartupLocation="CenterScreen">
+        WindowStartupLocation="CenterScreen" Icon="/Resources/Icono.ico">
 
     <Window.Resources>
 

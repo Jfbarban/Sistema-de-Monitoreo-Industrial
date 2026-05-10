@@ -38,9 +38,11 @@ namespace Sistema_de_Monitoreo_Industrial.Views
         {
             if (user == null) return;
 
+            ConfirmDialog aviso;
+
             if (user.Username.ToLower() == "admin")
             {
-                ConfirmDialog aviso = new ConfirmDialog("No se puede eliminar al administrador raíz.");
+                aviso = new ConfirmDialog("No se puede eliminar al administrador raíz.");
                 aviso.Owner = this; // Centrar sobre la ventana de configuración
                 aviso.ConfigurarComoAviso(); // Oculta el botón cancelar y cambia texto a 'ENTENDIDO'
                 aviso.ShowDialog();
@@ -48,7 +50,7 @@ namespace Sistema_de_Monitoreo_Industrial.Views
                 return;
             }
 
-            ConfirmDialog aviso = new ConfirmDialog($"¿Eliminar usuario {user.Username}?");
+            aviso = new ConfirmDialog($"¿Eliminar usuario {user.Username}?");
             aviso.Owner = this; // Centrar sobre la ventana de configuración
 
             if (aviso.ShowDialog() == true)

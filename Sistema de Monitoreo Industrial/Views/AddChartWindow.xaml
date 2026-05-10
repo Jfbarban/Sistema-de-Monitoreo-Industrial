@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Configurar Widget | Vertex-IoT" Height="566" Width="400" 
         Background="Transparent" WindowStartupLocation="CenterOwner"
-        WindowStyle="None" AllowsTransparency="True">
+        WindowStyle="None" AllowsTransparency="True" ShowInTaskbar="False">
 
     <Border BorderBrush="#333" BorderThickness="1.5" CornerRadius="15" Background="#1E1E1E">
         <Grid Margin="25">
